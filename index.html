@@ -1,28 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    #map { position: absolute; top: 0; bottom: 0; right: 0; left: 0 }
+  </style>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content= "IE-edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My First Page</title>
-  <!-- Enlace a la hoja de estilos de Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <!-- Enlace al script de Leaflet -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <title>Realm's Atlas</title>
 </head>
 <body>
-  <h1>Welcome to My Page!</h1>
-  <p>This is my custom web page hosted on GitHub Pages.</p>
-  <div id="map" style="height: 500px;"></div>
-  
-  <script>
-  // Crear el mapa centrado en una ubicación (lat, lon) y con un nivel de zoom
-  var map = L.map('map').setView([51.505, -0.09], 13);
-
-  // Cargar el tile layer de OpenStreetMap
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+  <div id="map"></div>
+<script>
+  var map = L.map('map').setView([0,0], 1);
+  L.imageOverlay('test.jpg', [[0, 0], [8192, 5301]]).addTo(map);
 </script>
 </body>
 </html>
