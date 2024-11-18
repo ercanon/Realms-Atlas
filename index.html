@@ -13,5 +13,16 @@
 <body>
   <h1>Welcome to My Page!</h1>
   <p>This is my custom web page hosted on GitHub Pages.</p>
+  <div id="map" style="height: 500px;"></div>
+  
+  <script>
+  // Crear el mapa centrado en una ubicación (lat, lon) y con un nivel de zoom
+  var map = L.map('map').setView([51.505, -0.09], 13);
+
+  // Cargar el tile layer de OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+</script>
 </body>
 </html>
