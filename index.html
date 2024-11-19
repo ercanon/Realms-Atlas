@@ -1,32 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <style>
-    #map { position: absolute; top: 25; bottom: 0; right: 0; left: 0 }
-  </style>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content= "IE-edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realms' Atlas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        .container {
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <div class="sticky-banner">
-    <h1>Realm's Atlas</h1>
-    <nav>
-        <a href="#inicio">Inicio</a>
-        <a href="#servicios">Servicios</a>
-        <a href="#contacto">Contacto</a>
-    </nav>
-  </div>
-  <div id="map"></div>
-  <input type="file" id="uploadImage" accept="image/*">
-  <button id="processImage">Procesar imagen</button>
-  <canvas id="imageCanvas" style="display:none;"></canvas>
-  <div id="map" style="width: 100%; height: 500px;"></div>
-  <script>
-    var map = L.map('map').setView([0,0], 1);
-    // L.imageOverlay('test.jpg', [[0, 0], [8192, 5301]]).addTo(map);
-  </script>
+    <header>
+        <h1>Realms' Atlas</h1>
+        <p>Mapas interactivos para tus campañas de D&D</p>
+    </header>
+    <div class="container">
+        <h2>Cargar un mapa</h2>
+        <input type="file" id="uploadImage" accept="image/*">
+        <input type="text" id="imageUrl" placeholder="O pega un enlace de imagen aquí" style="width: 80%; padding: 8px; margin: 10px 0;">
+        <button class="button" onclick="loadMap()">Cargar Mapa</button>
+        <div id="map"></div>
+        <h3>Añadir elementos interactivos</h3>
+        <button class="button" onclick="addMarker()">Añadir Marcador</button>
+        <button class="button" onclick="addPolygon()">Añadir Polígono</button>
+        <button class="button" onclick="shareMap()">Generar Enlace</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script>
+        let map;
+        function loadMap() {
+            const imageUrl = document.getElementById('imageUrl').value;
+            if (!imageUrl) {
+                alert('Por favor, carga una imagen o introduce un enlace válido.');
+                return;
+            }
+            if (!map) {
+                map = L.map('map').setView([0, 0], 2);
+            }
+            const bounds = [[-90, -180], [90, 180]]; // Placeholder for image bounds
+            L.imageOverlay(imageUrl, bounds).addTo(map);
+            map.fitBounds(bounds);
+        }
+
+        function addMarker() {
+            if (!map) {
+                alert('Carga un mapa primero.');
+                return;
+            }
+            L.marker([0, 0]).addTo(map)
+                .bindPopup('Marcador de ejemplo.')
+                .openPopup();
+        }
+
+        function addPolygon() {
+            if (!map) {
+                alert('Carga un mapa primero.');
+                return;
+            }
+            const polygon = L.polygon([
+                [0, 0],
+                [10, 10],
+                [10, 0]
+            ]).addTo(map);
+            polygon.bindPopup('Polígono de ejemplo.');
+        }
+
+        function shareMap() {
+            alert('Función de compartir en desarrollo. Pronto podrás generar enlaces únicos para compartir tu mapa.');
+        }
+    </script>
 </body>
 </html>
