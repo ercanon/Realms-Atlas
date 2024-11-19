@@ -13,42 +13,14 @@
 </head>
 <body>
   <div id="map"></div>
+  <input type="file" id="uploadImage" accept="image/*">
+  <button id="processImage">Procesar imagen</button>
+  <canvas id="imageCanvas" style="display:none;"></canvas>
+  <div id="map" style="width: 100%; height: 500px;"></div>
   <script>
     var map = L.map('map').setView([0,0], 1);
 
     // L.imageOverlay('test.jpg', [[0, 0], [8192, 5301]]).addTo(map);
-
-    // Crear un TileLayer personalizado
-    var CustomTileLayer = L.TileLayer.extend({
-      createTile: function (coords) {
-        var tile = document.createElement('canvas');
-        var ctx = tile.getContext('2d');
-
-        // Dimensiones del tile
-        var tileSize = this.options.tileSize;
-        tile.width = tileSize;
-        tile.height = tileSize;
-
-        var img = new Image();
-        img.src = 'test.jpg'; // Tu imagen base
-        img.onload = function () {
-          // Calcular el área de la imagen que corresponde a este tile
-          var x = coords.x * tileSize;
-          var y = coords.y * tileSize;
-
-          // Dibujar la sección de la imagen en el canvas del tile
-          ctx.drawImage(img, x, y, tileSize, tileSize, 0, 0, tileSize, tileSize);
-        };
-
-        return tile;
-      }
-    });
-
-    // Agregar el TileLayer al mapa
-    var customLayer = new CustomTileLayer('', {
-      tileSize: 256, // Tamaño de cada tile
-      maxZoom: 5 // Zoom máximo
-    }).addTo(map);
   </script>
 </body>
 </html>
