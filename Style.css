@@ -1,0 +1,36 @@
+/* Archivo styles.css */
+
+/* Estilo básico del banner */
+.sticky-banner {
+    position: fixed; /* Hace que el banner se quede en su lugar */
+    top: 0;          /* Fija el banner en la parte superior */
+    left: 0;         /* Alineado al lado izquierdo */
+    width: 100%;     /* Ocupa todo el ancho de la pantalla */
+    background-color: #333; /* Fondo oscuro */
+    color: white;    /* Texto blanco */
+    text-align: center;
+    padding: 10px 0; /* Espaciado vertical */
+    z-index: 1000;   /* Asegura que esté sobre otros elementos */
+}
+
+/* Asegurar que el contenido no quede detrás del banner */
+.content {
+    margin-top: 60px; /* Altura del banner para evitar que lo tape */
+    padding: 20px;
+}
+
+/* Añadir estilo al menú */
+.sticky-banner nav {
+    margin-top: 10px;
+}
+
+.sticky-banner nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.sticky-banner nav a:hover {
+    text-decoration: underline;
+}
