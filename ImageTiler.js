@@ -64,7 +64,10 @@ document.getElementById('processImage').addEventListener('click', function () {
                 }
             });
 
-            new customTileLayer().addTo(map);
+            var customLayer = new CustomTileLayer('', {
+              tileSize: 256, // Tamaño de cada tile
+              maxZoom: 5 // Zoom máximo
+            }).addTo(map);
         };
     }
 });
