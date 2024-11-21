@@ -1,111 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realms' Atlas</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
-        header {
-            background: #333;
-            color: #fff;
-            padding: 1rem 2rem;
-            text-align: center;
-        }
-        .container {
-            margin: 2rem auto;
-            max-width: 1200px;
-            padding: 1rem;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        #map {
-            height: 500px;
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-        .button {
-            display: inline-block;
-            padding: 10px 15px;
-            margin: 5px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recorte Dinámico de Imagen con Leaflet</title>
+  <!-- Incluir la hoja de estilos de Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    /* Establecer el tamaño del mapa */
+    #map {
+      width: 100%;
+      height: 600px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Realms' Atlas</h1>
-        <p>Mapas interactivos para tus campañas de D&D</p>
-    </header>
-    <div class="container">
-        <h2>Cargar un mapa</h2>
-        <input type="file" id="uploadImage" accept="image/*">
-        <input type="text" id="imageUrl" placeholder="O pega un enlace de imagen aquí" style="width: 80%; padding: 8px; margin: 10px 0;">
-        <button class="button" onclick="loadMap()">Cargar Mapa</button>
-        <div id="map"></div>
-        <h3>Añadir elementos interactivos</h3>
-        <button class="button" onclick="addMarker()">Añadir Marcador</button>
-        <button class="button" onclick="addPolygon()">Añadir Polígono</button>
-        <button class="button" onclick="shareMap()">Generar Enlace</button>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
-    <script>
-        let map;
-        function loadMap() {
-            const imageUrl = document.getElementById('imageUrl').value;
-            if (!imageUrl) {
-                alert('Por favor, carga una imagen o introduce un enlace válido.');
-                return;
-            }
-            if (!map) {
-                map = L.map('map').setView([0, 0], 2);
-            }
-            const bounds = [[-90, -180], [90, 180]]; // Placeholder for image bounds
-            L.imageOverlay(imageUrl, bounds).addTo(map);
-            map.fitBounds(bounds);
-        }
+  <div id="map"></div>
+  
+  <!-- Incluir la librería de Leaflet -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tilelayer-xyz/1.0.0/tilelayer-xyz.min.js"></script>
+  <script>
+    // Crear el mapa
+    const map = L.map('map').setView([0, 0], 2);
 
-        function addMarker() {
-            if (!map) {
-                alert('Carga un mapa primero.');
-                return;
-            }
-            L.marker([0, 0]).addTo(map)
-                .bindPopup('Marcador de ejemplo.')
-                .openPopup();
-        }
+    // Función para cortar la imagen en tiles
+    function createImageTiles(imageUrl, tileSize) {
+      const image = new Image();
+      image.src = imageUrl;
 
-        function addPolygon() {
-            if (!map) {
-                alert('Carga un mapa primero.');
-                return;
-            }
-            const polygon = L.polygon([
-                [0, 0],
-                [10, 10],
-                [10, 0]
-            ]).addTo(map);
-            polygon.bindPopup('Polígono de ejemplo.');
-        }
+      image.onload = function() {
+        const cols = Math.ceil(image.width / tileSize);
+        const rows = Math.ceil(image.height / tileSize);
 
-        function shareMap() {
-            alert('Función de compartir en desarrollo. Pronto podrás generar enlaces únicos para compartir tu mapa.');
-        }
-    </script>
+        // Crear una capa de tiles personalizados
+        const tileLayer = L.tileLayer('', {
+          minZoom: 0,
+          maxZoom: Math.max(cols, rows),
+          tileSize: tileSize,
+          bounds: [[0, 0], [image.height, image.width]],
+          tileUrl: function(coords) {
+            const x = coords.x % cols;
+            const y = coords.y % rows;
+
+            return `${imageUrl}?x=${x}&y=${y}&z=${coords.z}`;
+          }
+        });
+
+        tileLayer.addTo(map);
+      };
+    }
+
+    // Llamar a la función para cortar la imagen en tiles
+    createImageTiles('https://example.com/your-image.jpg', 256);
+  </script>
 </body>
 </html>
