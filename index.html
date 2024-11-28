@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realms' Atlas</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <header>
@@ -14,6 +15,20 @@
         </div>
     </header>
 
+    <main>
+        <div id="content">
+            <div id="imageInput">
+                <h2>Introduce una imagen o un enlace</h2>
+                <input type="file" id="uploadImage" accept="image/*" />
+                <input type="text" id="imageUrl" placeholder="O pega un enlace de imagen aquí" />
+                <button id="loadImageButton">Cargar imagen</button>
+            </div>
+
+            <div id="displayArea"></div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

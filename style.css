@@ -41,3 +41,54 @@ button {
 button:hover {
     background-color: #45a049;
 }
+
+/* Estilo del contenido principal */
+#content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 70px); /* Ajusta la altura excluyendo el header */
+    text-align: center;
+}
+
+#imageInput h2 {
+    margin-bottom: 10px;
+}
+
+#imageInput input {
+    margin: 5px;
+    padding: 10px;
+    font-size: 1rem;
+    width: 80%;
+    max-width: 400px;
+}
+
+#loadImageButton {
+    margin-top: 10px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#loadImageButton:hover {
+    background-color: #27ae60;
+}
+
+/* Área donde se muestra la imagen o el mapa */
+#displayArea {
+    margin-top: 20px;
+    width: 90%;
+    max-width: 800px;
+    height: 500px;
+    border: 1px solid #ccc;
+    background-color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
