@@ -19,7 +19,7 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
 });
 
 const displayArea = document.getElementById('displayArea');
-document.getElementById('loadImageButton').addEventListener('click', () => {
+document.getElementById('loadImgBtn').addEventListener('click', () => {
     const file = document.getElementById('uploadImage').files[0];
     const url = document.getElementById('imageUrl').value;
 
@@ -40,7 +40,7 @@ document.getElementById('loadImageButton').addEventListener('click', () => {
 function displayImage(imageSrc) {
     // Mostrar la imagen en el área de visualización
     displayArea.innerHTML = `<img src="${imageSrc}" alt="Imagen cargada" style="max-width: 100%; max-height: 100%;" />`;
-
+    displayArea.style.display = 'block';
     // Cambiar al mapa después de 3 segundos
     setTimeout(() => {
         displayMap();
@@ -49,7 +49,6 @@ function displayImage(imageSrc) {
 function displayMap() {
     // Limpiar el contenedor y mostrar el mapa
     displayArea.innerHTML = "";
-    displayArea.style.border = "none";
 
     // Crear un mapa usando Leaflet.js
     const map = L.map(displayArea).setView([51.505, -0.09], 13);
