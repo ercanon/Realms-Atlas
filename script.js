@@ -14,5 +14,6 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
         }
     } catch (error) {
         console.error("Error al compartir:", error);
+        alert("No se pudo compartir el enlace.");
     }
 });
