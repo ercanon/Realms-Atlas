@@ -6,7 +6,6 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
             text: "¡Explora mundos interactivos en Realms' Atlas!",
             url: window.location.href,
           });
-          alert("¡Enlace compartido exitosamente!");
         } else {
           // Fallback if Web Share API is not supported
           navigator.clipboard.writeText(window.location.href);
@@ -18,10 +17,10 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
     }
 });
 
-const displayArea = document.getElementById('displayArea');
+const displayArea = document.getElementById('mapRender');
 document.getElementById('loadImgBtn').addEventListener('click', () => {
-    const file = document.getElementById('uploadImage').files[0];
-    const url = document.getElementById('imageUrl').value;
+    const file = document.getElementById('uploadImg').files[0];
+    const url = document.getElementById('imgUrl').value;
 
     if (file) {
         // Cargar imagen desde el dispositivo

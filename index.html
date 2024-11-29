@@ -10,18 +10,19 @@
 <body>
     <header>
         <h1>Realms' Atlas</h1>
-        <button id="shareBtn">Share Spectator URL</button>
+        <button id="shareBtn">Spectator URL</button>
     </header>
 
     <main>
+        <div id="mapRender"></div>
+
         <div id="imgInput">
             <h2>Introduce una imagen o un enlace</h2>
-            <input type="file" id="uploadImage" accept="image/*" />
-            <input type="text" id="imageUrl" placeholder="O pega un enlace de imagen aquí" />
-            <button id="loadImgBtn">Cargar imagen</button>
+            <input type="file" id="uploadImg" accept="image/*" /> <br>
+            <input type="text" id="imgUrl" placeholder="O pega un enlace de imagen aquí" /> <br>
+            <button id="loadImgBtn">Load image</button> <br>
         </div>
 
-        <div id="displayArea"></div>
     </main>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
