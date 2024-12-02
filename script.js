@@ -1,60 +1,100 @@
-document.getElementById('shareBtn').addEventListener('click', async () => {
-    try {
-        if (navigator.share) {
+document.getElementById('shareBtn').addEventListener('click', async () => 
+{
+    try 
+    {
+        if (navigator.share) 
+        {
           await navigator.share({
             title: "Realms' Atlas",
             text: "¡Explora mundos interactivos en Realms' Atlas!",
             url: window.location.href,
           });
-        } else {
-          // Fallback if Web Share API is not supported
+        } 
+        else 
           navigator.clipboard.writeText(window.location.href);
-          alert("El enlace se ha copiado al portapapeles.");
-        }
-    } catch (error) {
+    } 
+    catch (error) 
+    {
         console.error("Error al compartir:", error);
         alert("No se pudo compartir el enlace.");
     }
 });
 
 const displayArea = document.getElementById('mapRender');
-document.getElementById('loadImgBtn').addEventListener('click', () => {
+document.getElementById('loadImgBtn').addEventListener('click', () => 
+{
     const file = document.getElementById('uploadImg').files[0];
     const url = document.getElementById('imgUrl').value;
 
-    if (file) {
-        // Cargar imagen desde el dispositivo
+    if (file) //From upload
+    {
         const reader = new FileReader();
         reader.onload = (e) => {
-            displayImage(e.target.result);
+            displayMap(e.target.result);
         };
         reader.readAsDataURL(file);
-    } else if (url) {
-        // Cargar imagen desde un enlace
-        displayImage(url);
-    } else {
+    } 
+    else if (url) //From URL
+        displayMap(url);
+    else //Null
         alert("Por favor, sube una imagen o ingresa un enlace.");
-    }
 });
-function displayImage(imageSrc) {
-    // Mostrar la imagen en el área de visualización
-    displayArea.innerHTML = `<img src="${imageSrc}" alt="Imagen cargada" style="max-width: 100%; max-height: 100%;" />`;
-    displayArea.style.display = 'block';
-    // Cambiar al mapa después de 3 segundos
-    setTimeout(() => {
-        displayMap();
-    }, 3000);
-}
-function displayMap() {
-    // Limpiar el contenedor y mostrar el mapa
+
+function displayMap(imgSrc) 
+{
     displayArea.innerHTML = "";
+    displayArea.style.display = 'block';
+    document.getElementById('imgInput').style.display = 'none';
 
-    // Crear un mapa usando Leaflet.js
-    const map = L.map(displayArea).setView([51.505, -0.09], 13);
+    const image = new Image();
+    image.src = imgSrc;
+    image.onload = () => {
+        const tileDim = 256;
+        const tileURLs = tileImg(image, tileDim);
 
-    // Añadir un tile layer
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+        const map = L.map(displayArea, {
+            crs: L.CRS.Simple,
+            minZoom: -5,
+            maxZoom: 2,
+        });
+    
+        const tileLayer = L.tileLayer('', {
+          tileSize: tileDim,
+          noWrap: true,
+        });
+
+        tileLayer.getTileUrl = function (coords) {
+          const { x, y } = coords;
+          const key = `${x}-${y}`;
+          return tileURLs[key] || null;
+        };
+
+        map.addLayer(tileLayer);
+
+        const bounds = [[0, 0], [image.height, image.width]];
+        map.setMaxBounds(bounds);
+        map.fitBounds(bounds);*/
+    };
+}
+    
+function tileImg(img, tileSize)
+{
+    const rows = Math.ceil(img.height / tileSize);
+    const cols = Math.ceil(img.width /  tileSize);
+    const tileURLs = {}; 
+    
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const canvas = document.createElement('canvas');
+            
+            const currentTileWidth = Math.min(tileSize, img.width - col * tileSize);
+            const currentTileHeight = Math.min(tileSize, img.height - row * tileSize);
+            canvas.width = currentTileWidth;
+            canvas.height = currentTileHeight;
+
+            tileURLs[`${col}-${row}`] = canvas.toDataURL();
+        }
+    }
+
+    return tileURLs;
 }
