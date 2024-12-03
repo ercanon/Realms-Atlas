@@ -31,6 +31,7 @@ document.getElementById('imgUrl').addEventListener('change', async function ()
         loadImg(await response.blob());
 })
 
+//const dataBase = new DataBase('TileDataBase');
 const mapRender = document.getElementById('mapRender');
 const fileInput = document.getElementById('fileInput');
 async function loadImg(inputFile)
@@ -40,13 +41,10 @@ async function loadImg(inputFile)
 
     mapRender.innerHTML = "";
 
-    const zoomLevels = [
-        [0, 256],
-        [1, 512]];
-
+    const zoomSettings = { lvl: 4, res: 256};
     try
     {
-        loadMap(await imgTiler(inputFile, zoomLevels), zoomLevels);
+        await imgTiler(inputFile, zoomSettings);
 
         mapRender.style.display = 'block';
         fileInput.style.display = 'none';
@@ -57,74 +55,76 @@ async function loadImg(inputFile)
     }
 }
 
-async function imgTiler(inputFile, zoomLevels)
+async function imgTiler(inputFile, zoomSettings)
 {
     const tileCache = {};
-    for (const [zoomLevel, dimension] of zoomLevels) {
-        const paddedImage = addPadding(await createImageBitmap(inputFile), dimension);
+    let resPow = zoomSettings.res/2;
+    const imgBitmap = await createImageBitmap(inputFile);
 
-        const rows = Math.ceil(paddedImage.width / dimension);
-        const cols = Math.ceil(paddedImage.height / dimension);
+    for (let z = 0; z <= zoomSettings.lvl; z++)
+    {
+        resPow *= 2;
+        const paddedImg = addPadding(imgBitmap, resPow);
 
-        let counter = 0;
+        const rows = Math.ceil(paddedImg.width  / resPow);
+        const cols = Math.ceil(paddedImg.height / resPow);
+
+        tileCache[z] = {};
         for (let x = 0; x < rows; x++) {
-            for (let y = 0; y < cols; y++) {
-                const tileCanvas = document.createElement('canvas');
-                tileCanvas.width = dimension;
-                tileCanvas.height = dimension;
+            for (let y = 0; y < cols; y++)
+            {
+                const tileCanvas  = document.createElement('canvas');
+                tileCanvas.width  = resPow;
+                tileCanvas.height = resPow;
                 
                 tileCanvas.getContext('2d').drawImage(
-                    paddedImage,
-                    x * dimension, y * dimension, dimension, dimension,
-                    0, 0, dimension, dimension
+                    paddedImg,
+                    x * resPow, y * resPow, resPow, resPow,
+                    0, 0, resPow, resPow
                 );
                 
-                const tileURL = URL.createObjectURL(await new Promise(resolve => tileCanvas.toBlob(resolve)));
-
-                if (!tileCache[zoomLevel]) tileCache[zoomLevel] = {};
-                if (!tileCache[zoomLevel][x]) tileCache[zoomLevel][x] = {};
-                tileCache[zoomLevel][x][y] = tileURL;
+                tileCache[z][`${x}_${y}`] = tileCanvas;
             }
         }
     }
 
-    return tileCache;
+    loadMap(tileCache, zoomSettings, [-imgBitmap.height, imgBitmap.width]);
 }
-
-function addPadding(imageBitmap, dimension) {
+function addPadding(imgBitmap, dimension) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    canvas.width = imageBitmap.width + getPadding(imageBitmap.width, dimension);
-    canvas.height = imageBitmap.height + getPadding(imageBitmap.height, dimension);
+    canvas.width = imgBitmap.width + getPadding(imgBitmap.width, dimension);
+    canvas.height = imgBitmap.height + getPadding(imgBitmap.height, dimension);
 
     ctx.fillStyle = 'rgba(0,0,0,0)'; // Transparent background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(imageBitmap, 0, 0);
+    ctx.drawImage(imgBitmap, 0, 0);
 
     return canvas;
 }
-
 function getPadding(dimension, cropDimension) {
     if (dimension % cropDimension === 0) return 0;
     return cropDimension - (dimension % cropDimension);
 }
 
-function loadMap(tileCache, zoomLevels) {
+function loadMap(tileCache, zoomSettings, imgSize) {
     const map = L.map(mapRender, {
         crs: L.CRS.Simple,
-        minZoom: zoomLevels[0][0],
-        maxZoom: zoomLevels[zoomLevels.length - 1][0]
-    }).setView([0, 0], zoomLevels[0][0]);
+        maxBounds: [[0, 0], imgSize],
+        maxBoundsViscosity: 1.0,
+        noWrap: true
+    }).setView([imgSize[0] / 2, imgSize[1] / 2], 0);
 
-    L.tileLayer('', {
-        attribution: 'Image Tiler Based on github.com/Simperfy/img2-Leaftlet-Tile',
-        tileSize: zoomLevels[0][1],
-        maxZoom: zoomLevels.length - 1,
-        getTileUrl(coords)
-        {
-            const { z, x, y } = coords;
-            tileCache[z]?.[x]?.[y] ?? '';
+    const CustomGridLayer = L.GridLayer.extend({
+        createTile: function (coords) {
+            const { x, y, z } = coords;
+            return tileCache[z][`${x}_${y}`] ?? document.createElement('canvas');
         }
+    });
+
+    new CustomGridLayer({
+        attribution: 'Image Tiler Based on github.com/Simperfy/img2-Leaftlet-Tile',
+        maxZoom: zoomSettings.lvl
     }).addTo(map);
 }
