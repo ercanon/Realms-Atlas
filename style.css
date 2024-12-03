@@ -38,9 +38,9 @@ header {
     background-color: #4CAF50;
     transition: background-color 0.3s ease;
 }
-#shareBtn:hover {
-    background-color: #45a049;
-}
+    #shareBtn:hover {
+        background-color: #45a049;
+    }
 
 
 
@@ -49,17 +49,13 @@ main {
     margin: 1.3rem;
 }
 
-
-
 #mapRender {
     height: 100%;
     z-index: 100;
     display: none;
 }
 
-
-
-#imgInput {
+#fileInput {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -69,28 +65,13 @@ main {
     text-align: center;
 }
 
-#imgInput h2 {
-    margin-bottom: 1rem;
-}
+    #fileInput h2 {
+        margin-bottom: 1rem;
+    }
 
-#imgInput input {
-    margin: 0.3rem;
-    padding: 0.62rem;
-    font-size: 1rem;
-    width: calc(200px + 15%);
-}
-
-#loadImgBtn {
-    margin-top: 0.62rem;
-    background-color: #2ecc71;
-    color: white;
-    border: none;
-    padding: 0.62rem 0.93rem;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 0.3rem;
-    transition: background-color 0.3s ease;
-}
-#loadImgBtn:hover {
-    background-color: #27ae60;
-}
+    #fileInput input {
+        margin: 0.3rem;
+        padding: 0.62rem;
+        font-size: 1rem;
+        width: calc(200px + 15%);
+    }
