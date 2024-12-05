@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realms' Atlas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <header>
+        <h1>Realms' Atlas</h1>
+        <button id="shareBtn">Spectator URL</button>
+    </header>
+
+    <main>
+        <div id="mapRender"></div>
+
+        <div id="fileInput">
+            <h2>Introduce una imagen o un enlace</h2>
+            <input type="file" id="uploadImg" accept="image/*" /> <br>
+            <input type="text" id="imgUrl" placeholder="O pega un enlace de imagen aquí" /> <br>
+        </div>
+
+    </main>
+
+    <!--Lib-->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!--Scripts-->
+    <script src="scripts/cacheData.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+</html>
