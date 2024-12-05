@@ -46,7 +46,7 @@ header {
 
 main {
     flex-grow: 1;
-    margin: 1.3rem;
+    margin: 0.6rem;
 }
 
 #mapRender {

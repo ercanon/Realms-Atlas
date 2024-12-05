@@ -4,7 +4,7 @@ document.getElementById('shareBtn').addEventListener('click', async () =>
         if (navigator.share) {
             await navigator.share({
                 title: "Realms' Atlas",
-                text: "¡Explora mundos interactivos en Realms' Atlas!",
+                text: "¡Explore interactive maps in Realms' Atlas!",
                 url: window.location.href,
             });
         }
@@ -12,7 +12,7 @@ document.getElementById('shareBtn').addEventListener('click', async () =>
             navigator.clipboard.writeText(window.location.href);
     }
     catch (error) {
-        return showError("No se pudo compartir el enlace.", error);
+        return showError("Could not share the url.", error);
     }
 });
 
@@ -23,10 +23,10 @@ document.getElementById('uploadImg').addEventListener('change', async function (
         return showError('No file selected.');
 
     const reader = new FileReader();
-    reader.readAsDataURL(file);
 
     reader.onload  = (event) => loadImg(event.target.result);
     reader.onerror = (event) => { return showError('An error occurred while reading the file.', event.target.error); }
+    reader.readAsDataURL(file);
 })
 document.getElementById('imgUrl').addEventListener('change', async function ()
 {
@@ -35,11 +35,15 @@ document.getElementById('imgUrl').addEventListener('change', async function ()
         return showError('Please, provide a valid image URL.');
 
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { method: 'HEAD' });
         if (!response.ok)
             return showError(`Failed to fetch image from URL: ${response.statusText}`);
 
-        loadImg(response.url);
+        const contentType = response.headers.get('Content-Type');
+        if (!contentType || !contentType.startsWith('image/'))
+            return showError('The URL does not point to a valid image.');
+
+        loadImg(url);
     }
     catch (error) {
         return showError('An error occurred while fetching the image.', error);
@@ -58,11 +62,12 @@ function loadImg(inputsrc)
         return showError("Please, upload an image or submit a valid url.");
 
     mapRender.innerHTML = "";
-    const zoomSettings = { lvl: 2, res: 256};
+    const zoomSettings = { lvl: 5, res: 256 };
+
     try {
         const img = new Image();
-        img.src = inputsrc;
         img.onload = () => loadLayer(img, zoomSettings);
+        img.src = inputsrc;
 
         mapRender.style.display = 'block';
         inputRender.style.display = 'none';
@@ -86,16 +91,7 @@ const CanvasLayer = L.GridLayer.extend({
         minZoom: 0,
 
         // The maximum zoom level up to which this layer will be displayed (inclusive).
-        maxZoom: 18,
-
-        // The zoom number used in tile URLs will be offset with this value.
-        zoomOffset: 0,
-
-        // If `true`, inverses Y axis numbering for tiles (turn this on for [TMS](https://en.wikipedia.org/wiki/Tile_Map_Service) services).
-        tms: false,
-
-        // If set to true, the zoom number used in tile URLs will be reversed (`maxZoom - zoom` instead of `zoom`)
-        zoomReverse: false,
+        maxZoom: 15,
 
         //Image to be tiled and rendered in the map
         img: null
@@ -107,9 +103,9 @@ const CanvasLayer = L.GridLayer.extend({
         const tileCanvas = L.DomUtil.create('canvas', 'leaflet-tile');
         tileCanvas.width = tileCanvas.height = resTile;
 
-        this._getTile(x, y, resTile).then(tile => { 
-            if (tile) 
-                tileCanvas.getContext('2d').drawImage(tile, 0, 0);
+        this._getDims(x, y, resTile).then(dims => {
+            if (dims)
+                tileCanvas.getContext('2d').drawImage(this.options.img, ...dims);
             done(null, tileCanvas);
         }).catch(error => {
             showError("Error generating tiles.", error);
@@ -117,7 +113,7 @@ const CanvasLayer = L.GridLayer.extend({
         });
         return tileCanvas;
     },
-    _getTile: async function (x, y, resTile)
+    _getDims: async function (x, y, resTile)
     {
         const img = this.options.img;
 
@@ -127,27 +123,33 @@ const CanvasLayer = L.GridLayer.extend({
         if (tileX >= img.width || tileY >= img.height || tileX < 0 || tileY < 0)
             return null;
 
-        return await createImageBitmap(
-            img,
-            tileX,
-            tileY,
-            resTile,
-            resTile
-        );
+        return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
     }
 });
-function loadLayer(img, zoomSettings)
+
+let map = null;
+function createMap()
 {
-    const map = L.map(mapRender, {
+    return L.map(mapRender, {
         crs: L.CRS.Simple,
+        zoomSnap: 0.5,
+        zoomDelta: 0.5, 
         maxBoundsViscosity: 1.0,
         noWrap: true,
     }).setView([0, 0], 0);
+}
+function loadLayer(img, zoomSettings)
+{
+    if (!map)
+        map = createMap();
 
     new CanvasLayer({
         attribution: 'Image Tiler Based on <a href="https://github.com/Simperfy/img2-Leaftlet-Tile" target="_blank">Simperfy/img2-Leaftlet-Tile</a>',
+        tileSize: zoomSettings.res,
         maxNativeZoom: zoomSettings.lvl,
-        bounds: [[0, 0], [-img.height, img.width]],
         img: img
     }).addTo(map);
+    const bounds = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
+    map.setMaxBounds(bounds);
+    map.fitBounds(bounds);
 }
