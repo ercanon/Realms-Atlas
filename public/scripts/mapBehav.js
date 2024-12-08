@@ -1,33 +1,3 @@
-/*>--------------- { ImageHandeler } ---------------<*/
-//const dataBase = new DataBase("TileDataBase");
-const mapRender = document.getElementById("mapRender");
-const inputRender = document.getElementById("fileInput");
-function loadImg(inputsrc)
-{
-    if (!inputsrc)
-        return showError("Please, upload an image or submit a valid url.");
-
-    mapRender.innerHTML = "";
-    const zoomSettings = { lvl: 5, res: 256 };
-
-    try {
-        const img = new Image();
-        img.onload = () => {
-            loadLayer(img, zoomSettings);
-
-        }
-        img.src = inputsrc;
-
-        mapRender.style.display = "block";
-        inputRender.style.display = "none";
-    }
-    catch (error) {
-        return showError("Error loading the image.", error);
-    }
-}
-
-
-
 /*>--------------- { MapHandeler } ---------------<*/
 const CanvasLayer = L.GridLayer.extend({
     options: {
@@ -50,6 +20,8 @@ const CanvasLayer = L.GridLayer.extend({
         this._getDims(x, y, resTile).then(dims => {
             if (dims)
                 tileCanvas.getContext("2d").drawImage(this.options.img, ...dims);
+            else
+                console.warn(`Generating outside bounds: ${x}_${y}`);
             done(null, tileCanvas);
         }).catch(error => {
             showError("Error generating tiles.", error);
@@ -57,8 +29,7 @@ const CanvasLayer = L.GridLayer.extend({
         });
         return tileCanvas;
     },
-    _getDims: async function (x, y, resTile)
-    {
+    _getDims: async function (x, y, resTile) {
         const img = this.options.img;
 
         const tileX = x * resTile;
@@ -70,30 +41,82 @@ const CanvasLayer = L.GridLayer.extend({
         return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
     }
 });
+class MapHandeler {
+    constructor(mapRend) {
+        this.mapRend = mapRend;
+        this.popupSys = document.getElementById("popups");
+        this.activeLayer = null;
 
-let map = null;
-function createMap()
-{
-    return L.map(mapRender, {
-        crs: L.CRS.Simple,
-        zoomSnap: 0.5,
-        zoomDelta: 0.5, 
-        maxBoundsViscosity: 1.0,
-        noWrap: true,
-    }).setView([0, 0], 0);
+        this.map = L.map(mapRend, {
+            crs: L.CRS.Simple,
+            zoomSnap: 0.5,
+            zoomDelta: 0.5,
+            attributionControl: false,
+            maxBoundsViscosity: 1.0,
+            noWrap: true,
+        }).setView([0, 0], 0);
+
+        const clearButton = L.control({ position: "topright" });
+        clearButton.onAdd = () => {
+            var button = L.DomUtil.create("button", "customControl");
+            button.innerHTML = "Clear Map";
+            button.onclick = () => {
+                this.popupSys.classList.remove("hidden");
+            };
+            return button;
+        };
+        clearButton.addTo(this.map);
+
+        mapRend.classList.add("hidden");
+        this.popupSys.classList.add("hidden");
+    }
+
+    loadLayer(img, zoomSettings) {
+        const bound = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
+        this.map.setMaxBounds(bound);
+        this.map.fitBounds(bound);
+
+        this.activeLayer = new CanvasLayer({
+            tileSize: zoomSettings.res,
+            maxNativeZoom: zoomSettings.lvl,
+            bounds: bound,
+            img: img
+        }).addTo(this.map);
+
+        this.mapRend.classList.remove("hidden");
+    }
+
+    deleteLayer() {
+        this.activeLayer.remove();
+        this.mapRend.classList.add("hidden");
+        this.closePopup();
+    }
+
+    closePopup() {
+        this.popupSys.classList.add("hidden");
+    }
 }
-function loadLayer(img, zoomSettings)
-{
-    if (!map)
-        map = createMap();
 
-    new CanvasLayer({
-        attribution: "Image Tiler Based on <a href='https://github.com/Simperfy/img2-Leaftlet-Tile' target=_blank'>Simperfy/img2-Leaftlet-Tile</a>",
-        tileSize: zoomSettings.res,
-        maxNativeZoom: zoomSettings.lvl,
-        img: img
-    }).addTo(map);
-    const bounds = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
-    map.setMaxBounds(bounds);
-    map.fitBounds(bounds);
+
+
+/*>--------------- { ImageHandeler } ---------------<*/
+//const dataBase = new DataBase("TileDataBase");
+const mapHandeler = new MapHandeler(document.getElementById("mapRender"));
+function loadImg(inputsrc)
+{
+    if (!inputsrc)
+        return showError("Please, upload an image or submit a valid url.");
+
+    const zoomSettings = { lvl: 5, res: 256 };
+
+    try {
+        const img = new Image();
+        img.onload = () => {
+            mapHandeler.loadLayer(img, zoomSettings);
+        }
+        img.src = inputsrc;
+    }
+    catch (error) {
+        return showError("Error loading the image.", error);
+    }
 }

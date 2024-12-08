@@ -6,6 +6,9 @@
     <title>Realms' Atlas</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <!--Lib-->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
     <header>
@@ -16,6 +19,14 @@
     <main>
         <div id="mapRender"></div>
 
+        <div id="popups">
+            <div id="layerDel">
+                <h2>Are you sure you want to delete this layer?</h2>
+                <button id="deleteBtn" onclick="mapHandeler.deleteLayer()">Delete</button>
+                <button id="cancelBtn" onclick="mapHandeler.closePopup()">Cancel</button>
+            </div>
+        </div>
+
         <div id="fileInput">
             <h2>Introduce una imagen o un enlace</h2>
             <input type="file" id="uploadImg" accept="image/*" /> <br>
@@ -24,8 +35,6 @@
 
     </main>
 
-    <!--Lib-->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <!--Scripts-->
     <script src="scripts/eventUtils.js"></script>

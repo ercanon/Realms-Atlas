@@ -1,8 +1,4 @@
 /*>--------------- { EventListeners } ---------------<*/
-window.addEventListener('open', function (event) {
-    console.log('New window opened with URL: ' + event.target.location.href);
-});
-
 document.getElementById("shareBtn").addEventListener("click", async () => {
     try {
         if (navigator.share) {
