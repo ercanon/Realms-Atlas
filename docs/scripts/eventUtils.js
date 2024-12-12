@@ -2,18 +2,30 @@
 window.onload = async () => {
     const dataLoad = new PopDiv("loadData");
 
+    const params = new URLSearchParams(window.location.search)
+
+    window.p2p = await new P2P(params.get("id"));
     window.mapHandeler = await new MapHandeler(document.getElementById("mapRender"));
     window.mapDB = await new DataBase();
 
     const transData = await mapDB.getData("mapData");
-    if (transData)
-        await loadImg(transData);
+    if (transData) {
+        try {
+            const decodeData = new TextDecoder().decode(fflate.gunzipSync(transData));
+            await loadImg(decodeData);
+        }
+        catch (error) {
+            showError("Error loading file from previous session.", error);
+        }
+    }
     
     dataLoad.delete();
 };
 
 document.getElementById("shareBtn").addEventListener("click", async () => {
-    const shareURL = `${window.location.origin}?data=${await window.mapDB.getData("mapData")}`;
+    
+    const shareURL = `${window.location.origin}?id=${window.p2p.getID()}`;
+
     try {
         if (navigator.share) {
             await navigator.share({
@@ -26,7 +38,7 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
             navigator.clipboard.writeText(shareURL);
     }
     catch (error) {
-        return showError("Could not share the url.", error);
+        showError("Could not share the url.", error);
     }
 });
 
@@ -35,31 +47,28 @@ document.getElementById("uploadImg").addEventListener("change", async function (
     if (!file)
         return showError("No file selected.");
 
-    const reader = new FileReader();
+    try {
+        const reader = new FileReader();
 
-    reader.onload = (event) => loadImg(event.target.result);
-    reader.onerror = (event) => { return showError("An error occurred while reading the file.", event.target.error); }
-    reader.readAsDataURL(file);
+        reader.onload = async (event) => {
+            const encodeData = new TextEncoder().encode(event.target.result);
+            await window.mapDB.saveData("mapData", fflate.gzipSync(encodeData));
+            await loadImg(event.target.result);
+        }
+        reader.onerror = (event) => { throw new Error(event.target.error) };
+
+        reader.readAsDataURL(file);
+    }
+    catch (error) {
+        showError("Error loading input file.", error);
+    }
 })
 document.getElementById("imgUrl").addEventListener("change", async function () {
     const url = this.value.trim();
     if (!url)
         return showError("Please, provide a valid image URL.");
 
-    try {
-        const response = await fetch(url, { method: "HEAD" });
-        if (!response.ok)
-            return showError(`Failed to fetch image from URL: ${response.statusText}`);
-
-        const contentType = response.headers.get("Content-Type");
-        if (!contentType || !contentType.startsWith("image/"))
-            return showError("The URL does not point to a valid image.");
-
-        loadImg(url);
-    }
-    catch (error) {
-        return showError("An error occurred while fetching the image.", error);
-    }
+    loadImg(url);
 })
 
 
@@ -71,9 +80,8 @@ function showError(message, error = null) {
 }
 
 class PopDiv {
+    #popup = null;
     constructor(id) {
-        this.popup = null;
-
         switch (id) {
             case "delLayer":
                 this.#createDelLayer();
@@ -83,6 +91,7 @@ class PopDiv {
                 break;
             default:
                 showError("Popup type not valid")
+                this.#createBackGround(null);
                 break;
         }
     }
@@ -93,7 +102,7 @@ class PopDiv {
 
         parent.appendChild(topPop);
         document.querySelector('main').appendChild(parent);
-        this.popup = parent;
+        this.#popup = parent;
     }
     #createDelLayer() {
         const popup = document.createElement("div");
@@ -117,24 +126,21 @@ class PopDiv {
     }
 
     show() {
-        this.popup.classList.remove("hide");
+        this.#popup.classList.remove("hide");
     }
 
     hide() {
-        this.popup.classList.add("hide");
+        this.#popup.classList.add("hide");
     }
 
     delete() {
-        const main = document.querySelector('main');
-
-        if (this.popup && main.contains(this.popup))
-            main.removeChild(this.popup);
+        document.querySelector('main').removeChild(this.#popup);
     }
 }
 
 class DataBase {
+    #dataBase = null;
     constructor() {
-        this.dataBase = null;
         return (async () => {
             await this.#initDB();
             return this;
@@ -153,7 +159,7 @@ class DataBase {
             };
 
             request.onsuccess = (event) => {
-                this.dataBase = event.target.result;
+                this.#dataBase = event.target.result;
                 resolve();
             }
             request.onerror = (event) => reject(event.target.error);
@@ -162,7 +168,7 @@ class DataBase {
 
     saveData(nameObj, data) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readwrite");
+            const transaction = this.#dataBase.transaction("mapData", "readwrite");
             const store = transaction.objectStore("mapData");
 
             const request = store.put({ nameObj, data });
@@ -174,7 +180,7 @@ class DataBase {
 
     getData(nameObj) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readonly");
+            const transaction = this.#dataBase.transaction("mapData", "readonly");
             const store = transaction.objectStore("mapData");
 
             const request = store.get(nameObj);
@@ -187,7 +193,7 @@ class DataBase {
 
     delData(nameObj) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readwrite");
+            const transaction = this.#dataBase.transaction("mapData", "readwrite");
             const store = transaction.objectStore("mapData");
 
             const request = store.delete(nameObj);
@@ -195,5 +201,50 @@ class DataBase {
             request.onsuccess = () => resolve();
             request.onerror = (event) => reject(event.target.error);
         });
+    }
+}
+
+class P2P {
+    #peer = null;
+    #peerID = null;
+    constructor(idPeer) {
+        this.#createPeer(idPeer);
+    }
+
+    #createPeer(idPeer) {
+        this.#peer = new SimplePeer({ initiator: !idPeer, trickle: false, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+
+        if (idPeer) {
+            this.#setSignal(idPeer)
+        }
+
+        this.#peer.on('signal', (id) => {
+            this.#peerID = JSON.stringify(id);
+        
+            if (idPeer)
+                this.sendData(this.#peerID);
+        });
+
+        this.#peer.on('connect', () => {
+            console.log('Peer connected!');
+        });
+
+        this.#peer.on('data', (data) => {
+            if (!idPeer)
+                this.#setSignal(data);
+        });
+
+    }
+
+    #setSignal(id) {
+        this.#peer.signal(JSON.parse(id));
+    }
+
+    sendData(data) {
+        this.#peer.send(data);
+    }
+
+    getID() {
+        return this.#peerID;
     }
 }

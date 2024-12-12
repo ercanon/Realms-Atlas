@@ -39,10 +39,11 @@ const CanvasLayer = L.GridLayer.extend({
     }
 });
 class MapHandeler {
+    #delLayerPop = new PopDiv("delLayer");
+    #mapRend = null;
+    #activeLayer = null;
     constructor(mapRend) {
-        this.mapRend = mapRend;
-        this.delLayerPop = new PopDiv("delLayer");
-        this.activeLayer = null;
+        this.#mapRend = mapRend;
 
         this.map = L.map(mapRend, {
             crs: L.CRS.Simple,
@@ -59,7 +60,7 @@ class MapHandeler {
             var button = L.DomUtil.create("button", "customControl");
             button.innerHTML = "Clear Map";
             button.onclick = () => {
-                this.delLayerPop.show();
+                this.#delLayerPop.show();
             };
             return button;
         };
@@ -73,7 +74,7 @@ class MapHandeler {
         this.map.setMaxBounds(bound);
         this.map.fitBounds(bound);
 
-        this.activeLayer = new CanvasLayer({
+        this.#activeLayer = new CanvasLayer({
             tileSize: zoomSettings.res,
             maxNativeZoom: zoomSettings.lvl,
             minZoom: this.map.getBoundsZoom(bound),
@@ -81,19 +82,19 @@ class MapHandeler {
             img: img
         }).addTo(this.map);
 
-        this.mapRend.classList.remove("hide");
+        this.#mapRend.classList.remove("hide");
     }
 
     async deleteLayer() {
-        this.activeLayer.remove();
+        this.#activeLayer.remove();
         await window.mapDB.delData("mapData");
 
-        this.mapRend.classList.add("hide");
+        this.#mapRend.classList.add("hide");
         this.closePopup();
     }
 
     closePopup() {
-        this.delLayerPop.hide();
+        this.#delLayerPop.hide();
     }
 }
 
@@ -101,20 +102,13 @@ class MapHandeler {
 
 /*>--------------- { ImageHandeler } ---------------<*/
 function loadImg(inputSrc) {
-    if (!inputSrc)
-        return showError("Please, upload an image or submit a valid url.");
-
-    const zoomSettings = { lvl: 4, res: 128 };
-
     try {
         const img = new Image();
-        img.onload = async () => {
-            await window.mapDB.saveData("mapData", inputSrc);
-            window.mapHandeler.loadLayer(img, zoomSettings);
-        }
+        img.onload  = () => window.mapHandeler.loadLayer(img, { lvl: 4, res: 128 });
+        img.onerror = (event) => { throw new Error (event.target.error)};
         img.src = inputSrc;
     }
     catch (error) {
-        return showError("Error loading the image.", error);
+        showError("Error loading the image.", error);
     }
 }
