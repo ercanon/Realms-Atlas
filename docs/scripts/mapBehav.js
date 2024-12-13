@@ -40,12 +40,16 @@ const CanvasLayer = L.GridLayer.extend({
 });
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
-    #mapRend = null;
+    #map = null;
     #activeLayer = null;
-    constructor(mapRend) {
-        this.#mapRend = mapRend;
+    constructor() {
+        //Div
+        const container = document.createElement("div");
+        container.id = "mapRender";
+        document.querySelector("main").appendChild(container);
 
-        this.map = L.map(mapRend, {
+        //Map
+        this.#map = L.map(container, {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
@@ -64,32 +68,33 @@ class MapHandeler {
             };
             return button;
         };
-        clearButton.addTo(this.map);
+        clearButton.addTo(this.#map);
 
-        mapRend.classList.add("hide");
+        //Post-Creation
+        this.#map.getContainer().classList.add("hide");
     }
 
     loadLayer(img, zoomSettings) {
         const bound = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
-        this.map.setMaxBounds(bound);
-        this.map.fitBounds(bound);
+        this.#map.setMaxBounds(bound);
+        this.#map.fitBounds(bound);
 
         this.#activeLayer = new CanvasLayer({
             tileSize: zoomSettings.res,
             maxNativeZoom: zoomSettings.lvl,
-            minZoom: this.map.getBoundsZoom(bound),
+            minZoom: this.#map.getBoundsZoom(bound),
             bounds: bound,
             img: img
-        }).addTo(this.map);
+        }).addTo(this.#map);
 
-        this.#mapRend.classList.remove("hide");
+        this.#map.getContainer().classList.remove("hide");
     }
 
     async deleteLayer() {
         this.#activeLayer.remove();
-        await window.mapDB.delData("mapData");
+        await mapDB.delData("mapData");
 
-        this.#mapRend.classList.add("hide");
+        this.#map.getContainer().classList.add("hide");
         this.closePopup();
     }
 
@@ -104,7 +109,7 @@ class MapHandeler {
 function loadImg(inputSrc) {
     try {
         const img = new Image();
-        img.onload  = () => window.mapHandeler.loadLayer(img, { lvl: 4, res: 128 });
+        img.onload  = () => mapHandeler.loadLayer(img, { lvl: 4, res: 128 });
         img.onerror = (event) => { throw new Error (event.target.error)};
         img.src = inputSrc;
     }
