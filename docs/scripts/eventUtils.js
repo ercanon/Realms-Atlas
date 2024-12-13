@@ -53,6 +53,7 @@ document.getElementById("uploadImg").addEventListener("change", async function (
         reader.onload = async (event) => {
             const encodeData = new TextEncoder().encode(event.target.result);
             await window.mapDB.saveData("mapData", fflate.gzipSync(encodeData));
+            window.p2p.sendData("¡Cargando Mapa!");
             await loadImg(event.target.result);
         }
         reader.onerror = (event) => { throw new Error(event.target.error) };
@@ -205,51 +206,40 @@ class DataBase {
 }
 
 class P2P {
-    #peer = null;
+    #connect = [];
     #peerID = null;
     constructor(idPeer) {
-
         this.#createPeer(idPeer);
     }
 
     #createPeer(idPeer) {
         if (!idPeer) {
-            this.#peerID = window.crypto.randomUUID();
+            this.#peerID = crypto.randomUUID();
+
+            console.log(`Trying to set Host ID: ${this.#peerID}`);
             const peer = new Peer(this.#peerID);
 
             peer.on('connection', (connection) => {
-                console.log("Nuevo cliente conectado: ", connection.peer);
+                console.log("New client: ", connection.peer);
+                this.#connect.push(connection);
 
-                // Enviar un mensaje al cliente
-                connection.send("¡Bienvenido!");
-
-                // Recibir mensajes del cliente
                 connection.on('data', (data) => {
-                    console.log("Mensaje del Cliente: ", data);
+                    
                 });
             });
         }
         else {
-            console.log("Intentando conectar al Host con ID: ", idPeer);
-
-            // Crear Peer para el cliente
+            console.log("Trying to connect to Host ID: ", idPeer);
             const peer = new Peer();
 
-            // Una vez que el cliente tenga su propio ID, conectar al Host
             peer.on('open', (clientId) => {
-                console.log("ID del Cliente: ", clientId);
+                console.log(`Client ID: ${clientId}`);
 
-                // Conectar al Host
                 const connection = peer.connect(idPeer);
+                this.#connect.push(connection);
 
-                // Manejar mensajes entrantes desde el Host
                 connection.on('data', (data) => {
-                    console.log("Mensaje del Host: ", data);
-                });
-
-                // Enviar mensaje al Host
-                connection.on('open', () => {
-                    connection.send("¡Hola, Host!");
+                    
                 });
             });
         }
@@ -257,5 +247,9 @@ class P2P {
 
     getID() {
         return this.#peerID;
+    }
+
+    sendData(data) {
+        this.#connect.forEach((peer) => peer.send(data));
     }
 }
