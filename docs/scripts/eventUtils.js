@@ -24,7 +24,7 @@ window.onload = async () => {
 
 document.getElementById("shareBtn").addEventListener("click", async () => {
     
-    const shareURL = `${window.location.origin}?id=${window.p2p.getID()}`;
+    const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`;
 
     try {
         if (navigator.share) {
@@ -208,40 +208,51 @@ class P2P {
     #peer = null;
     #peerID = null;
     constructor(idPeer) {
+
         this.#createPeer(idPeer);
     }
 
     #createPeer(idPeer) {
-        this.#peer = new SimplePeer({ initiator: !idPeer, trickle: false, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+        if (!idPeer) {
+            this.#peerID = window.crypto.randomUUID();
+            const peer = new Peer(this.#peerID);
 
-        if (idPeer) {
-            this.#setSignal(idPeer)
+            peer.on('connection', (connection) => {
+                console.log("Nuevo cliente conectado: ", connection.peer);
+
+                // Enviar un mensaje al cliente
+                connection.send("¡Bienvenido!");
+
+                // Recibir mensajes del cliente
+                connection.on('data', (data) => {
+                    console.log("Mensaje del Cliente: ", data);
+                });
+            });
         }
+        else {
+            console.log("Intentando conectar al Host con ID: ", idPeer);
 
-        this.#peer.on('signal', (id) => {
-            this.#peerID = JSON.stringify(id);
-        
-            if (idPeer)
-                this.sendData(this.#peerID);
-        });
+            // Crear Peer para el cliente
+            const peer = new Peer();
 
-        this.#peer.on('connect', () => {
-            console.log('Peer connected!');
-        });
+            // Una vez que el cliente tenga su propio ID, conectar al Host
+            peer.on('open', (clientId) => {
+                console.log("ID del Cliente: ", clientId);
 
-        this.#peer.on('data', (data) => {
-            if (!idPeer)
-                this.#setSignal(data);
-        });
+                // Conectar al Host
+                const connection = peer.connect(idPeer);
 
-    }
+                // Manejar mensajes entrantes desde el Host
+                connection.on('data', (data) => {
+                    console.log("Mensaje del Host: ", data);
+                });
 
-    #setSignal(id) {
-        this.#peer.signal(JSON.parse(id));
-    }
-
-    sendData(data) {
-        this.#peer.send(data);
+                // Enviar mensaje al Host
+                connection.on('open', () => {
+                    connection.send("¡Hola, Host!");
+                });
+            });
+        }
     }
 
     getID() {
