@@ -1,4 +1,4 @@
-#bgPopup {
+.bgPopup {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,18 +11,18 @@
     background-color: #80808080;
 }
 
-#loadMsg {
+.loadMsg {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #dcdcdc;
     border-radius: 1rem;
     width: calc(15.6rem + 20%);
 }
-    #loadMsg h2 {
+    .loadMsg h2 {
         margin-bottom: 0rem;
     }
 
-#delLayer {
+.delLayer {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #dcdcdc;
@@ -30,7 +30,7 @@
     width: calc(15.6rem + 20%);
 }
 
-    #delLayer button {
+    .delLayer button {
         padding: 0.5rem 0.6rem;
         margin-inline: 0.5rem;
         border-radius: 0.3rem;

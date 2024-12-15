@@ -14,13 +14,13 @@ const CanvasLayer = L.GridLayer.extend({
         const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
         tileCanvas.width = tileCanvas.height = resTile;
 
-        this._getDims(x, y, resTile).then(dims => {
+        this._getDims(x, y, resTile).then((dims) => {
             if (dims)
                 tileCanvas.getContext("2d").drawImage(this.options.img, ...dims);
             else
                 console.warn(`Generating outside bounds: ${x}_${y}`);
             done(null, tileCanvas);
-        }).catch(error => {
+        }).catch((error) => {
             showError("Error generating tiles.", error);
             done(error, null);
         });
@@ -42,7 +42,7 @@ class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
     #activeLayer = null;
-    constructor() {
+    constructor(isHost) {
         //Div
         const container = document.createElement("div");
         container.id = "mapRender";
@@ -59,32 +59,32 @@ class MapHandeler {
         }).setView([0, 0], 0);
 
         //Del Button
-        const clearButton = L.control({ position: "topright" });
-        clearButton.onAdd = () => {
-            var button = L.DomUtil.create("button", "customControl");
-            button.innerHTML = "Clear Map";
-            button.onclick = () => {
-                this.#delLayerPop.show();
+        if (isHost) {
+            const clearButton = L.control({ position: "topright" });
+            clearButton.onAdd = () => {
+                var button = L.DomUtil.create("button", "customControl");
+                button.innerHTML = "Clear Map";
+                button.onclick = () => this.#delLayerPop.show();
+                return button;
             };
-            return button;
-        };
-        clearButton.addTo(this.#map);
+            clearButton.addTo(this.#map);
+        }
 
         //Post-Creation
         this.#map.getContainer().classList.add("hide");
     }
 
-    loadLayer(img, zoomSettings) {
-        const bound = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
-        this.#map.setMaxBounds(bound);
-        this.#map.fitBounds(bound);
+    loadLayer(img, { lvl, res }) {
+        const bounds = [[0, 0], [-img.height / Math.pow(2, lvl), img.width / Math.pow(2, lvl)]];
+        this.#map.setMaxBounds(bounds);
+        this.#map.fitBounds(bounds);
 
         this.#activeLayer = new CanvasLayer({
-            tileSize: zoomSettings.res,
-            maxNativeZoom: zoomSettings.lvl,
-            minZoom: this.#map.getBoundsZoom(bound),
-            bounds: bound,
-            img: img
+            tileSize: res,
+            maxNativeZoom: lvl,
+            minZoom: this.#map.getBoundsZoom(bounds),
+            bounds,
+            img
         }).addTo(this.#map);
 
         this.#map.getContainer().classList.remove("hide");
@@ -93,6 +93,7 @@ class MapHandeler {
     async deleteLayer() {
         this.#activeLayer.remove();
         await mapDB.delData("mapData");
+        p2p.sendData({ type: "del" })
 
         this.#map.getContainer().classList.add("hide");
         this.closePopup();
@@ -106,14 +107,9 @@ class MapHandeler {
 
 
 /*>--------------- { ImageHandeler } ---------------<*/
-function loadImg(inputSrc) {
-    try {
-        const img = new Image();
-        img.onload  = () => mapHandeler.loadLayer(img, { lvl: 4, res: 128 });
-        img.onerror = (event) => { throw new Error (event.target.error)};
-        img.src = inputSrc;
-    }
-    catch (error) {
-        showError("Error loading the image.", error);
-    }
+function loadImg(inputSrc, options = { lvl: 4, res: 128 }) {
+    const img = new Image();
+    img.onload = () => mapHdl.loadLayer(img, options);
+    img.onerror = (event) => { throw new Error(event.target.error) };
+    img.src = inputSrc;
 }
