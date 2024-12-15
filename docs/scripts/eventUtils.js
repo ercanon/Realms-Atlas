@@ -1,24 +1,35 @@
 /*>--------------- { EventListeners } ---------------<*/
 window.onload = async () => {
-    const dataLoad = new PopDiv("loadData");
+    const dataLoad = new PopDiv("Loading previous session data...");
 
-    window.mapHandeler = await new MapHandeler(document.getElementById("mapRender"));
-    window.mapDB = await new DataBase();
+    const params = new URLSearchParams(window.location.search)
 
-    const transData = await mapDB.getData("mapData");
-    if (transData)
-        await loadImg(transData);
+    mapDB = await new DataBase();
+    mapHandeler = await new MapHandeler();
+    p2p = await new P2P(params.get("id"));
+
+    const savedData = await mapDB.getData("mapData");
+    if (savedData) {
+        try {
+            const decompressedData = fflate.gunzipSync(savedData);
+            const blob = new Blob([decompressedData], { type: "image/webp" })
+            loadImg(URL.createObjectURL(blob));
+        }
+        catch (error) {
+            showError("Error loading file from previous session.", error);
+        }
+    }
     
     dataLoad.delete();
 };
 
-document.getElementById("shareBtn").addEventListener("click", async () => {
-    const shareURL = `${window.location.origin}?data=${await window.mapDB.getData("mapData")}`;
+document.getElementById("shareBtn").addEventListener("click", async () => { 
+    const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`; 
+
     try {
         if (navigator.share) {
             await navigator.share({
-                title: "Realms' Atlas",
-                text: "¡Explore interactive maps in Realms' Atlas!",
+                title: "Realms' Atlas Spectator",
                 url: shareURL,
             });
         }
@@ -26,20 +37,34 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
             navigator.clipboard.writeText(shareURL);
     }
     catch (error) {
-        return showError("Could not share the url.", error);
+        showError("Could not share the url.", error);
     }
 });
 
 document.getElementById("uploadImg").addEventListener("change", async function () {
-    const file = this.files[0];
+    const file = this.files?.[0];
     if (!file)
         return showError("No file selected.");
 
-    const reader = new FileReader();
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const compressedData = fflate.gzipSync(new Uint8Array(arrayBuffer), { level: 9 });
+        await mapDB.saveData("mapData", compressedData);
 
-    reader.onload = (event) => loadImg(event.target.result);
-    reader.onerror = (event) => { return showError("An error occurred while reading the file.", event.target.error); }
-    reader.readAsDataURL(file);
+        p2p.sendData({
+            type: "img",
+            filename: file.name,
+            mimeType: file.type,
+            data: compressedData,
+        });
+
+        const blob = new Blob([arrayBuffer], { type: "image/webp" })
+        await loadImg(URL.createObjectURL(blob));
+    }
+    catch (error) {
+        showError("Error loading input file.", error);
+    }
+    this.value = "";
 })
 document.getElementById("imgUrl").addEventListener("change", async function () {
     const url = this.value.trim();
@@ -47,18 +72,10 @@ document.getElementById("imgUrl").addEventListener("change", async function () {
         return showError("Please, provide a valid image URL.");
 
     try {
-        const response = await fetch(url, { method: "HEAD" });
-        if (!response.ok)
-            return showError(`Failed to fetch image from URL: ${response.statusText}`);
-
-        const contentType = response.headers.get("Content-Type");
-        if (!contentType || !contentType.startsWith("image/"))
-            return showError("The URL does not point to a valid image.");
-
         loadImg(url);
     }
     catch (error) {
-        return showError("An error occurred while fetching the image.", error);
+        showError("Error loading image URL.", error);
     }
 })
 
@@ -71,70 +88,63 @@ function showError(message, error = null) {
 }
 
 class PopDiv {
+    #popup = null;
     constructor(id) {
-        this.popup = null;
-
         switch (id) {
             case "delLayer":
                 this.#createDelLayer();
                 break;
-            case "loadData":
-                this.#createLoadData();
-                break;
             default:
-                showError("Popup type not valid")
+                this.#createMsg(id);
                 break;
         }
     }
 
     #createBackGround(topPop) {
         const parent = document.createElement("div");
-        parent.classList.add("bgPopup");
+        parent.id = "bgPopup";
 
         parent.appendChild(topPop);
-        document.querySelector('main').appendChild(parent);
-        this.popup = parent;
+        document.querySelector("main").appendChild(parent);
+        this.#popup = parent;
     }
     #createDelLayer() {
         const popup = document.createElement("div");
         popup.id = "delLayer";
         popup.innerHTML =
             `<h2>Are you sure you want to delete this layer?</h2>
-            <button id="deleteBtn" onclick="window.mapHandeler.deleteLayer()">Delete</button>
-            <button id="cancelBtn" onclick="window.mapHandeler.closePopup()">Cancel</button>`;
+            <button id="deleteBtn" onclick="mapHandeler.deleteLayer()">Delete</button>
+            <button id="cancelBtn" onclick="mapHandeler.closePopup()">Cancel</button>`;
 
         this.#createBackGround(popup);
         this.hide();
     }
-    #createLoadData() {
+    #createMsg(msg) {
         const popup = document.createElement("div");
-        popup.id = "loadData";
+        popup.id = "loadMsg";
         popup.innerHTML =
-            `<h2>Loading previous session data...</h2>`;
+            `<h2>${msg}</h2>`;
 
         this.#createBackGround(popup);
         this.show();
     }
 
     show() {
-        this.popup.classList.remove("hide");
+        this.#popup.classList.remove("hide");
     }
 
     hide() {
-        this.popup.classList.add("hide");
+        this.#popup.classList.add("hide");
     }
 
     delete() {
-        const main = document.querySelector('main');
-
-        if (this.popup && main.contains(this.popup))
-            main.removeChild(this.popup);
+        document.querySelector("main").removeChild(this.#popup);
     }
 }
 
 class DataBase {
+    #dataBase = null;
     constructor() {
-        this.dataBase = null;
         return (async () => {
             await this.#initDB();
             return this;
@@ -153,7 +163,7 @@ class DataBase {
             };
 
             request.onsuccess = (event) => {
-                this.dataBase = event.target.result;
+                this.#dataBase = event.target.result;
                 resolve();
             }
             request.onerror = (event) => reject(event.target.error);
@@ -162,7 +172,7 @@ class DataBase {
 
     saveData(nameObj, data) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readwrite");
+            const transaction = this.#dataBase.transaction("mapData", "readwrite");
             const store = transaction.objectStore("mapData");
 
             const request = store.put({ nameObj, data });
@@ -174,7 +184,7 @@ class DataBase {
 
     getData(nameObj) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readonly");
+            const transaction = this.#dataBase.transaction("mapData", "readonly");
             const store = transaction.objectStore("mapData");
 
             const request = store.get(nameObj);
@@ -187,7 +197,7 @@ class DataBase {
 
     delData(nameObj) {
         return new Promise((resolve, reject) => {
-            const transaction = this.dataBase.transaction("mapData", "readwrite");
+            const transaction = this.#dataBase.transaction("mapData", "readwrite");
             const store = transaction.objectStore("mapData");
 
             const request = store.delete(nameObj);
@@ -195,5 +205,65 @@ class DataBase {
             request.onsuccess = () => resolve();
             request.onerror = (event) => reject(event.target.error);
         });
+    }
+}
+
+class P2P {
+    #connect = [];
+    #peerID = null;
+    constructor(idPeer) {
+        this.#createPeer(idPeer);
+    }
+
+    #createPeer(idPeer) {
+        if (!idPeer) {
+            this.#peerID = crypto.randomUUID();
+
+            console.log(`Setting the Host ID: ${this.#peerID}`);
+            const peer = new Peer(this.#peerID);
+
+            peer.on("connection", async (connection) => {
+                console.log("New client: ", connection.peer);
+                this.#connect.push(connection);
+                this.sendData({ type: "init", data: mapDB.getData("mapData") });
+
+                connection.on("data", async (incmg) => {
+
+                });
+            });
+        }
+        else {
+            console.log("Connecting to Host ID: ", idPeer);
+            const peer = new Peer();
+
+            peer.on("open", (clientId) => {
+                console.log(`Client ID: ${clientId}`);
+
+                const connection = peer.connect(idPeer);
+                this.#connect.push(connection);
+
+                connection.on("data", async (incmg) => {
+                    switch (incmg.type) {
+                        case "init":
+                        case "img":
+                            const decompressedData = fflate.gunzipSync(incmg.data);
+                            const blob = new Blob([decompressedData], { type: "image/webp" });
+                            loadImg(URL.createObjectURL(blob));
+                            break;
+                        default:
+                            throw new Error("Received invalid data");
+                            break;
+                    }
+                });
+            });
+        }
+    }
+
+    getID() {
+        return this.#peerID;
+    }
+
+    sendData(data) {
+        this.#connect.forEach((peer) => peer.send(data));
     }
 }

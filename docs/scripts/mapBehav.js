@@ -39,12 +39,17 @@ const CanvasLayer = L.GridLayer.extend({
     }
 });
 class MapHandeler {
-    constructor(mapRend) {
-        this.mapRend = mapRend;
-        this.delLayerPop = new PopDiv("delLayer");
-        this.activeLayer = null;
+    #delLayerPop = new PopDiv("delLayer");
+    #map = null;
+    #activeLayer = null;
+    constructor() {
+        //Div
+        const container = document.createElement("div");
+        container.id = "mapRender";
+        document.querySelector("main").appendChild(container);
 
-        this.map = L.map(mapRend, {
+        //Map
+        this.#map = L.map(container, {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
@@ -59,41 +64,42 @@ class MapHandeler {
             var button = L.DomUtil.create("button", "customControl");
             button.innerHTML = "Clear Map";
             button.onclick = () => {
-                this.delLayerPop.show();
+                this.#delLayerPop.show();
             };
             return button;
         };
-        clearButton.addTo(this.map);
+        clearButton.addTo(this.#map);
 
-        mapRend.classList.add("hide");
+        //Post-Creation
+        this.#map.getContainer().classList.add("hide");
     }
 
     loadLayer(img, zoomSettings) {
         const bound = [[0, 0], [-img.height / Math.pow(2, zoomSettings.lvl), img.width / Math.pow(2, zoomSettings.lvl)]];
-        this.map.setMaxBounds(bound);
-        this.map.fitBounds(bound);
+        this.#map.setMaxBounds(bound);
+        this.#map.fitBounds(bound);
 
-        this.activeLayer = new CanvasLayer({
+        this.#activeLayer = new CanvasLayer({
             tileSize: zoomSettings.res,
             maxNativeZoom: zoomSettings.lvl,
-            minZoom: this.map.getBoundsZoom(bound),
+            minZoom: this.#map.getBoundsZoom(bound),
             bounds: bound,
             img: img
-        }).addTo(this.map);
+        }).addTo(this.#map);
 
-        this.mapRend.classList.remove("hide");
+        this.#map.getContainer().classList.remove("hide");
     }
 
     async deleteLayer() {
-        this.activeLayer.remove();
-        await window.mapDB.delData("mapData");
+        this.#activeLayer.remove();
+        await mapDB.delData("mapData");
 
-        this.mapRend.classList.add("hide");
+        this.#map.getContainer().classList.add("hide");
         this.closePopup();
     }
 
     closePopup() {
-        this.delLayerPop.hide();
+        this.#delLayerPop.hide();
     }
 }
 
@@ -101,20 +107,13 @@ class MapHandeler {
 
 /*>--------------- { ImageHandeler } ---------------<*/
 function loadImg(inputSrc) {
-    if (!inputSrc)
-        return showError("Please, upload an image or submit a valid url.");
-
-    const zoomSettings = { lvl: 4, res: 128 };
-
     try {
         const img = new Image();
-        img.onload = async () => {
-            await window.mapDB.saveData("mapData", inputSrc);
-            window.mapHandeler.loadLayer(img, zoomSettings);
-        }
+        img.onload  = () => mapHandeler.loadLayer(img, { lvl: 4, res: 128 });
+        img.onerror = (event) => { throw new Error (event.target.error)};
         img.src = inputSrc;
     }
     catch (error) {
-        return showError("Error loading the image.", error);
+        showError("Error loading the image.", error);
     }
 }
