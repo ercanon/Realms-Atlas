@@ -38,18 +38,56 @@ const CanvasLayer = L.GridLayer.extend({
         return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
     }
 });
-const rolIcon = L.Icon.extend({
+const svgIcon = L.DivIcon.extend({
     options: {
-        iconSize: [38, 95],
-        shadowSize: [50, 64],
-        iconAnchor: [22, 94],
-        shadowAnchor: [4, 62],
-        popupAnchor: [-3, -76]
+        markUrl: "icons/position-marker.svg",
+        markColor: "blue",
+
+        tokenUrl: "icons/bank.svg",
+        tokenColor: "red"
+    },
+    createIcon: function () {
+        const mark = this._loadSVG(this.options.markUrl).then((markSVG) => {
+            markSVG = markSVG.documentElement;
+            markSVG.querySelector("path")?.setAttribute("fill", this.options.markColor);
+
+            markSVG.style.transform = `scale(0.2) translate(-50%, -50%)`;
+            return markSVG;
+        });
+
+        const token = this._loadSVG(this.options.tokenUrl).then((tokenSVG) => {
+            tokenSVG = tokenSVG.documentElement;
+            tokenSVG.querySelector("path")?.setAttribute("fill", this.options.tokenColor);
+
+            tokenSVG = tokenSVG.querySelector("g");
+            tokenSVG.style.transformOrigin = "center";
+            tokenSVG.style.transform = `scale(0.38) translate(0%, -50%)`;
+            return tokenSVG;
+        });
+
+        return Promise.all([mark, token]).then(([markSVG, tokenSVG]) => {
+            markSVG.appendChild(tokenSVG);
+            return markSVG;
+        });
+    },
+    getIconToken: function () {
+
+    },
+    getMarkColor: function () {
+
+    },
+    getIconColor: function () {
+
+    },
+    _loadSVG: async function (url) {
+        const response = await fetch(url);
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        return parser.parseFromString(svgText, "image/svg+xml");
     }
 });
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
-    #imgMarker = null;
     #map = null;
     #activeLayer = null;
     constructor(isHost) {
@@ -81,36 +119,14 @@ class MapHandeler {
         }
 
         //Marker Creation
-        this.#loadSVG("icons/position-marker.svg").then((imgSVG) => {
-            imgSVG.style.transform = "scale(0.5)";
-            this.#imgMarker = imgSVG;
-        });
         this.#map.on("click", async (e) => {
             const { lat, lng } = e.latlng;
 
-            this.#imgMarker.querySelector("path")?.setAttribute("fill", "blue");
-
-            const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(this.#imgMarker);
-
-            const marker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    html: svgString,
-                    iconSize: [128, 128],
-                })
-            });
-
-            marker.addTo(this.#map);
+            L.marker([lat, lng], { icon: await new svgIcon() }).addTo(this.#map);
         });
 
         //Post-Creation
         this.#map.getContainer().classList.add("hide");
-    }
-    async #loadSVG(url) {
-        const response = await fetch(url);
-        const svgText = await response.text();
-        const parser = new DOMParser();
-        return parser.parseFromString(svgText, "image/svg+xml").querySelector("svg");
     }
 
     loadLayer(img, { lvl, res }) {
