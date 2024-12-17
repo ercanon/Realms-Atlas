@@ -38,8 +38,18 @@ const CanvasLayer = L.GridLayer.extend({
         return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
     }
 });
+const rolIcon = L.Icon.extend({
+    options: {
+        iconSize: [38, 95],
+        shadowSize: [50, 64],
+        iconAnchor: [22, 94],
+        shadowAnchor: [4, 62],
+        popupAnchor: [-3, -76]
+    }
+});
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
+    #imgMarker = null;
     #map = null;
     #activeLayer = null;
     constructor(isHost) {
@@ -70,8 +80,37 @@ class MapHandeler {
             clearButton.addTo(this.#map);
         }
 
+        //Marker Creation
+        this.#loadSVG("icons/position-marker.svg").then((imgSVG) => {
+            imgSVG.style.transform = "scale(0.5)";
+            this.#imgMarker = imgSVG;
+        });
+        this.#map.on("click", async (e) => {
+            const { lat, lng } = e.latlng;
+
+            this.#imgMarker.querySelector("path")?.setAttribute("fill", "blue");
+
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(this.#imgMarker);
+
+            const marker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    html: svgString,
+                    iconSize: [128, 128],
+                })
+            });
+
+            marker.addTo(this.#map);
+        });
+
         //Post-Creation
         this.#map.getContainer().classList.add("hide");
+    }
+    async #loadSVG(url) {
+        const response = await fetch(url);
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        return parser.parseFromString(svgText, "image/svg+xml").querySelector("svg");
     }
 
     loadLayer(img, { lvl, res }) {
