@@ -38,18 +38,57 @@ const CanvasLayer = L.GridLayer.extend({
         return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
     }
 });
-const rolIcon = L.Icon.extend({
+const svgIcon = L.DivIcon.extend({
     options: {
-        iconSize: [38, 95],
-        shadowSize: [50, 64],
-        iconAnchor: [22, 94],
-        shadowAnchor: [4, 62],
-        popupAnchor: [-3, -76]
+        markHTML: "icons/position-marker.svg",
+        markScale: 0.5,
+        markColor: "blue",
+
+        tokenUrl: "icons/bank.svg",
+        tokenScale: 1,
+        tokenColor: "red"
+    },
+    createIcon: function () {
+        const markSVG = this.options.markHTML;
+        const markProps = markSVG.querySelector("g");
+        markSVG.querySelector("path")?.setAttribute("fill", this.options.markColor);
+        markProps?.setAttribute("transform", `translate(-50%, -50%) scale(${this.options.markScale})`);
+        markProps?.style.top = '50%';
+        markProps?.style.left = '50%';
+
+        this.constructor.loadSVG(this.options.tokenUrl).then((imgSVG) => {
+            imgSVG.querySelector("path")?.setAttribute("fill", this.options.tokenColor);
+
+            const tokenProps = imgSVG.documentElement.querySelector("g");
+            tokenProps?.setAttribute("transform", `translate(-50%, -50%) scale(${this.options.markScale * this.options.tokenScale})`);
+            tokenProps?.style.position = 'absolute';
+            tokenProps?.style.top = '50%';
+            tokenProps?.style.left = '50%';
+            markSVG.appendChild(tokenProps);
+        });
+
+        return markSVG;
+    },
+    getIconToken: function () {
+
+    },
+    getMarkColor: function () {
+
+    },
+    getIconColor: function () {
+
+    },
+    statics: {
+        async loadSVG(url) {
+            const response = await fetch(url);
+            const svgText = await response.text();
+            const parser = new DOMParser();
+            return parser.parseFromString(svgText, "image/svg+xml");
+        }
     }
 });
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
-    #imgMarker = null;
     #map = null;
     #activeLayer = null;
     constructor(isHost) {
@@ -81,36 +120,18 @@ class MapHandeler {
         }
 
         //Marker Creation
-        this.#loadSVG("icons/position-marker.svg").then((imgSVG) => {
-            imgSVG.style.transform = "scale(0.5)";
-            this.#imgMarker = imgSVG;
+        let markSVG = null;
+        svgIcon.loadSVG("icons/position-marker.svg").then((imgSVG) => {
+            markSVG = imgSVG.documentElement;
         });
-        this.#map.on("click", async (e) => {
+        this.#map.on("click", (e) => {
             const { lat, lng } = e.latlng;
 
-            this.#imgMarker.querySelector("path")?.setAttribute("fill", "blue");
-
-            const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(this.#imgMarker);
-
-            const marker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    html: svgString,
-                    iconSize: [128, 128],
-                })
-            });
-
-            marker.addTo(this.#map);
+            L.marker([lat, lng], { icon: new svgIcon({ markHTML: markSVG.cloneNode(true) }) }).addTo(this.#map);
         });
 
         //Post-Creation
         this.#map.getContainer().classList.add("hide");
-    }
-    async #loadSVG(url) {
-        const response = await fetch(url);
-        const svgText = await response.text();
-        const parser = new DOMParser();
-        return parser.parseFromString(svgText, "image/svg+xml").querySelector("svg");
     }
 
     loadLayer(img, { lvl, res }) {
