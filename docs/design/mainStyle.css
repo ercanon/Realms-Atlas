@@ -1,7 +1,7 @@
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: inherit;
 }
 
 body {
@@ -24,6 +24,7 @@ header {
     z-index: 1000;
     display: flex;
     padding: 0.6rem 1.2rem;
+    box-sizing: border-box;
     align-items: center;
     justify-content: space-between;
     color: white;
@@ -32,7 +33,7 @@ header {
 }
 
 #shareBtn {
-    padding: 0.5rem 0.6rem;
+    padding: 0.4rem 0.5rem;
     border-radius: 0.3rem;
     cursor: pointer;
     border: none;
@@ -41,21 +42,18 @@ header {
     background-color: #4CAF50;
     transition: background-color 0.3s ease;
 }
-#shareBtn:hover {
-    background-color: #45a049;
+    #shareBtn:hover {
+        background-color: #45a049;
+    }
+
+
+.hide {
+    display: none !important;
 }
-
-
-
 main {
     flex-grow: 1;
     margin: 0.6rem;
 }
-.hide {
-    display: none !important;
-}
-
-/*#mapRender*/
 
 #fileInput {
     position: absolute;

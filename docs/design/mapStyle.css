@@ -3,16 +3,84 @@
     z-index: 200;
 }
 
-.customControl {
-    padding: 0.3rem;
+.clearBtn {
+    padding: 0.5rem;
     border-radius: 0.3rem;
     cursor: pointer;
     border: none;
     color: #FFFFFF;
     font-weight: bold;
+    font-size: 0.81rem;
     background-color: #D32F2F;
     transition: background-color 0.3s ease;
 }
-    .customControl:hover {
+    .clearBtn:hover {
         background-color: #B71C1C;
     }
+
+#markdown-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#markdown-editor {
+    flex: 1;
+    resize: none;
+    width: 100%;
+    padding: 0.62rem;
+}
+
+#markdown-preview {
+    flex: 4;
+    padding: 0.62rem;
+    word-wrap: break-word;
+    text-align: justify;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+    border-top: 0.06rem solid #ddd;
+}
+    #markdown-preview h1 {
+        font-size: 1.5rem;
+        margin-top: 1rem;
+    }
+    #markdown-preview h2 {
+        font-size: 1.25rem;
+        margin-top: 0.75rem;
+    }
+    #markdown-preview p {
+        margin: 0.5rem 0;
+    }
+    #markdown-preview code {
+        background-color: #eee;
+        padding: 0.12rem 0.25rem;
+        border-radius: 0.78rem;
+    }
+    #markdown-preview pre {
+        background-color: #eee;
+        padding: 0.62rem;
+        border-radius: 0.31rem;
+        overflow-x: auto;
+    }
+    #markdown-preview a {
+        color: blue;
+        text-decoration: underline;
+    }
+
+
+
+.leaflet-control-search .search-button {
+    position: absolute;
+    height: 2.5rem !important;
+    width: 2.5rem !important;
+    background-size: 1.7rem !important;
+    background-position: center 5.6px !important;
+    /*    left: 10px !important;*/
+}
+    .leaflet-control-search .search-button:hover {
+        background-position-y: -26.5px !important;
+    }
+
+.leaflet-sidebar {
+    top: 62px !important;
+}

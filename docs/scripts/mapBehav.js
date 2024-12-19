@@ -2,7 +2,7 @@
 const CanvasLayer = L.GridLayer.extend({
     options: {
         // The maximum zoom level up to which this layer will be displayed (inclusive).
-        maxZoom: 10,
+        maxZoom: 8,
 
         //Image to be tiled and rendered in the map
         img: null
@@ -89,46 +89,106 @@ const svgIcon = L.DivIcon.extend({
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
+    #sidebar = null;
     #activeLayer = null;
     constructor(isHost) {
-        //Div
-        const container = document.createElement("div");
-        container.id = "mapRender";
-        document.querySelector("main").appendChild(container);
+        const docuMain = document.querySelector("main");
 
-        //Map
-        this.#map = L.map(container, {
+        /*>---------- [ Map Construct ] ----------<*/
+        const mapDiv = document.createElement("div");
+        mapDiv.id = "mapRender";
+        docuMain.appendChild(mapDiv);
+
+        this.#map = L.map(mapDiv, {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
             attributionControl: false,
             maxBoundsViscosity: 1.0,
             noWrap: true,
+            zoomControl: false
         }).setView([0, 0], 0);
 
-        //Del Button
+        /*>---------- [ Zoom Construct ] ----------<*/
+        L.control.zoom({
+            position: "topright"
+        }).addTo(this.#map);
+
+        /*>---------- [ ClearBtn Construct ] ----------<*/
         if (isHost) {
-            const clearButton = L.control({ position: "topright" });
-            clearButton.onAdd = () => {
-                var button = L.DomUtil.create("button", "customControl");
+            const clearBtn = L.control({ position: "bottomright" });
+            clearBtn.onAdd = () => {
+                var button = L.DomUtil.create("button", "clearBtn");
                 button.innerHTML = "Clear Map";
                 button.onclick = () => this.#delLayerPop.show();
                 return button;
             };
-            clearButton.addTo(this.#map);
+            clearBtn.addTo(this.#map);
         }
 
-        //Marker Creation
-        this.#map.on("click", async (e) => {
-            const { lat, lng } = e.latlng;
+        /*>---------- [ Search Construct ] ----------<*/
+        L.control.search({
+            position: "topleft",
+            autoCollapse: true
+        }).addTo(this.#map);
 
-            L.marker([lat, lng], { icon: await new svgIcon() }).addTo(this.#map);
+        /*>---------- [ Sidebar Construct ] ----------<*/
+        const sidebarDiv = document.createElement("div");
+        sidebarDiv.id = "sidebar";
+        sidebarDiv.className = "leaflet-sidebar collapsed";
+
+        this.#sidebar = L.control.sidebar({
+            position: "left",
+            container: "sidebar",
+            autopan: true
+        }).addTo(this.#map);
+
+        //Info Panel
+        const infoDiv = document.createElement("div");
+        this.#sidebar.addPanel({
+            id: "markdown-panel",
+            tab: `<svg style="vertical-align: middle; width: 2rem; height: 2rem;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+	                <path d="M8 7.333V10.667M14 8C14 11.98 11.98 14 8 14C4.02 14 2 11.98 2 8C2 4.02 4.02 2 8 2C11.98 2 14 4.02 14 8Z" stroke="#000000" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"/>
+	                <circle cx="8" cy="5" r="0.667" fill="#000000"/>
+                  </svg>`,
+            title: "Map Info",
+            pane: infoDiv,
         });
 
-        //Post-Creation
+        if (isHost) {
+            const editor = document.createElement("textarea");
+            editor.id = "markdown-editor";
+            editor.placeholder = "Write in Markdown(.md)...";
+            infoDiv.appendChild(editor);
+
+            editor.addEventListener("change", () => preview.innerHTML = marked.parse(editor.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
+        }
+        const preview = document.createElement("div");
+        preview.id = "markdown-preview";
+        infoDiv.appendChild(preview);
+
+        //Index Panel
+        this.#sidebar.addPanel({
+            id: 'markIndex',
+            tab: `<svg style="vertical-align: middle; width: 2rem; height: 2rem;" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+	                <path d="M 3 3 L 1 3 L 1 5 L 3 5 L 3 3 Z M 3 7 L 1 7 L 1 9 L 3 9 L 3 7 Z M 1 11 L 3 11 L 3 13 L 1 13 L 1 11 Z M 15 3 L 5 3 L 5 5 L 15 5 L 15 3 Z M 15 7 L 5 7 L 5 9 L 15 9 L 15 7 Z M 5 11 L 15 11 L 15 13 L 5 13 L 5 11 Z" fill="#000000"/>
+                  </svg>`,
+            title: "Markers Index",
+            button: 'https://github.com/noerw/leaflet-sidebar-v2',
+        });   
+
+        /*>---------- [ Marker Construct ] ----------<*/
+        this.#map.on("click", (e) => {
+            const { lat, lng } = e.latlng;
+
+            L.marker([lat, lng], { icon: new svgIcon() }).addTo(this.#map);
+        });
+
+        /*>---------- [ Post-Construct ] ----------<*/
         this.#map.getContainer().classList.add("hide");
     }
 
+    /*>---------- [ Map Layer ] ----------<*/
     loadLayer(img, { lvl, res }) {
         const bounds = [[0, 0], [-img.height / Math.pow(2, lvl), img.width / Math.pow(2, lvl)]];
         this.#map.setMaxBounds(bounds);
@@ -157,12 +217,14 @@ class MapHandeler {
     closePopup() {
         this.#delLayerPop.hide();
     }
+
+    /*>---------- [ Sidebar ] ----------<*/
 }
 
 
 
 /*>--------------- { ImageHandeler } ---------------<*/
-function loadImg(inputSrc, options = { lvl: 4, res: 128 }) {
+function loadImg(inputSrc, options = { lvl: 4, res: 256 }) {
     const img = new Image();
     img.onload = () => mapHdl.loadLayer(img, options);
     img.onerror = (event) => { throw new Error(event.target.error) };
