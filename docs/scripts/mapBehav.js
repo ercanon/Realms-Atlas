@@ -92,37 +92,61 @@ class MapHandeler {
     #activeLayer = null;
     constructor(isHost) {
         //Div
-        const container = document.createElement("div");
-        container.id = "mapRender";
-        document.querySelector("main").appendChild(container);
+        const mapDiv = document.createElement("div");
+        mapDiv.id = "mapRender";
+        document.querySelector("main").appendChild(mapDiv);
 
         //Map
-        this.#map = L.map(container, {
+        this.#map = L.map(mapDiv, {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
             attributionControl: false,
             maxBoundsViscosity: 1.0,
             noWrap: true,
+            zoomControl: false
         }).setView([0, 0], 0);
+
+        //Zoom
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(this.#map);
+
+        //Index
+        const indexDiv = document.createElement("div");
+        indexDiv.id = "indexEditor";
+        indexDiv.classList.add("hide");
+        mapDiv.appendChild(indexDiv);
+
+        const indexBtn = L.control({ position: "topleft" });
+        indexBtn.onAdd = () => {
+            var button = L.DomUtil.create("button", "indexBtn");
+            button.innerHTML =
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width: 24px; height: 24px;">
+	                <path d="M96 96 H32 V160 H96 V96 Z M96 224 H32 V288 H96 V224 Z M96 352 H32 V416 H96 V352 Z M480 96 H160 V160 H480 V96 Z M480 224 H160 V288 H480 V224 Z M160 352 H480 V416 H160 V352 Z" fill="#000"/>
+                </svg>`;
+            button.onclick = () => indexDiv.classList.contains("hide") ? indexDiv.classList.remove("hide") : indexDiv.classList.add("hide");
+            return button;
+        };
+        indexBtn.addTo(this.#map);
 
         //Del Button
         if (isHost) {
-            const clearButton = L.control({ position: "topright" });
-            clearButton.onAdd = () => {
-                var button = L.DomUtil.create("button", "customControl");
+            const clearBtn = L.control({ position: "bottomright" });
+            clearBtn.onAdd = () => {
+                var button = L.DomUtil.create("button", "clearBtn");
                 button.innerHTML = "Clear Map";
                 button.onclick = () => this.#delLayerPop.show();
                 return button;
             };
-            clearButton.addTo(this.#map);
+            clearBtn.addTo(this.#map);
         }
 
         //Marker Creation
-        this.#map.on("click", async (e) => {
+        this.#map.on("click", (e) => {
             const { lat, lng } = e.latlng;
 
-            L.marker([lat, lng], { icon: await new svgIcon() }).addTo(this.#map);
+            L.marker([lat, lng], { icon: new svgIcon() }).addTo(this.#map);
         });
 
         //Post-Creation

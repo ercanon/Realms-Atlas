@@ -41,21 +41,18 @@ header {
     background-color: #4CAF50;
     transition: background-color 0.3s ease;
 }
-#shareBtn:hover {
-    background-color: #45a049;
+    #shareBtn:hover {
+        background-color: #45a049;
+    }
+
+
+.hide {
+    display: none !important;
 }
-
-
-
 main {
     flex-grow: 1;
     margin: 0.6rem;
 }
-.hide {
-    display: none !important;
-}
-
-/*#mapRender*/
 
 #fileInput {
     position: absolute;
