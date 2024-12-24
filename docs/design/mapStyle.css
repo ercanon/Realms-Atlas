@@ -1,8 +1,10 @@
-#mapRender {
+/*>---------- [ Map ] ----------<*/
+.leaflet-container {
     height: 100%;
     z-index: 200;
 }
 
+/*>---------- [ Corner Ctrl ] ----------<*/
 .clearBtn {
     padding: 0.5rem;
     border-radius: 0.3rem;
@@ -18,69 +20,131 @@
         background-color: #B71C1C;
     }
 
-#markdown-panel {
-    display: flex;
+/*>---------- [ Sidebar ] ----------<*/
+.leaflet-control-search .search-input {
+    width: 24.53rem;
+}
+
+.leaflet-control-search .search-button {
+    height: 2.5rem !important;
+    width: 2.5rem !important;
+    background-size: 1.7rem !important;
+    background-position: center 0.35rem !important;
+}
+    .leaflet-control-search .search-button:hover {
+        background-position-y: -1.65rem !important;
+    }
+
+.leaflet-sidebar {
+    top: 3.87rem !important;
+}
+
+.leaflet-sidebar-pane {
+    --distPadding: 0.6rem;
+    padding-left: var(--distPadding) !important;
+    padding-right: var(--distPadding) !important;
+}
+
+.leaflet-sidebar-header {
+    margin-bottom: var(--distPadding) !important;
+}
+
+.leaflet-sidebar-tabs>ul>li {
+    font-size: 1.34rem !important;
+}
+
+.md-panel.active{
+    display: flex !important;
     flex-direction: column;
     height: 100%;
 }
 
-#markdown-editor {
+#md-editor {
     flex: 1;
     resize: none;
     width: 100%;
     padding: 0.62rem;
 }
 
-#markdown-preview {
+#md-preview {
     flex: 4;
-    padding: 0.62rem;
+    overflow-y: scroll;
     word-wrap: break-word;
     text-align: justify;
     font-size: 1rem;
     background-color: #f9f9f9;
     border-top: 0.06rem solid #ddd;
 }
-    #markdown-preview h1 {
+    #md-preview h1 {
         font-size: 1.5rem;
         margin-top: 1rem;
     }
-    #markdown-preview h2 {
+    #md-preview h2 {
         font-size: 1.25rem;
         margin-top: 0.75rem;
     }
-    #markdown-preview p {
+    #md-preview p {
         margin: 0.5rem 0;
     }
-    #markdown-preview code {
+    #md-preview code {
         background-color: #eee;
         padding: 0.12rem 0.25rem;
         border-radius: 0.78rem;
     }
-    #markdown-preview pre {
+    #md-preview pre {
         background-color: #eee;
         padding: 0.62rem;
         border-radius: 0.31rem;
         overflow-x: auto;
     }
-    #markdown-preview a {
+    #md-preview a {
         color: blue;
         text-decoration: underline;
     }
 
-
-
-.leaflet-control-search .search-button {
-    position: absolute;
-    height: 2.5rem !important;
-    width: 2.5rem !important;
-    background-size: 1.7rem !important;
-    background-position: center 5.6px !important;
-    /*    left: 10px !important;*/
+#newSpotBtn {
+    width: 100%;
+    height: 3.12rem;
+    border: 0.13rem dashed #4c4c4c;
+    background-color: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
 }
-    .leaflet-control-search .search-button:hover {
-        background-position-y: -26.5px !important;
+    #newSpotBtn:hover {
+        --hoverColor: #0074d9;
+        border-color: var(--hoverColor);
     }
 
-.leaflet-sidebar {
-    top: 62px !important;
+#newSpotBtn i {
+    pointer-events: none;
+    transition: color 0.3s ease;
+}
+    #newSpotBtn:hover i {
+        color: var(--hoverColor);
+    }
+
+.new-div {
+    width: 100%;
+    height: 50px;
+    background-color: #f0f0f0;
+    border: 2px dashed #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #333;
+    opacity: 0;
+    animation: fade-in 0.3s ease forwards;
+    margin-bottom: 10px; /* Espacio entre el nuevo div y el siguiente botón */
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }

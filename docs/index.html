@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="design/mainStyle.css">
     <link rel="stylesheet" href="design/mapStyle.css">
     <link rel="stylesheet" href="design/popupStyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/css/leaflet-sidebar.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/MarkerCluster.min.css">
@@ -22,9 +23,25 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.js"></script>
 </head>
 <body>
+    <!--Structure Templates-->
+    <template id="panel-template">
+        <div id="pane" class="leaflet-sidebar-pane">
+            <h1 class="leaflet-sidebar-header">
+                NULL
+                <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>
+            </h1>
+        </div>
+    </template>
+
+    <template id="spot-template">
+        <div class="new-div"> "New Div" </div>
+    </template>
+
+    <!--Body Render-->
     <header>
         <h1>Realms' Atlas</h1>
         <button id="shareBtn">Spectator URL</button>
+        <button id="dnldBtn"><i class="fa-solid fa-file-arrow-down"></i></button>
     </header>
 
     <main>

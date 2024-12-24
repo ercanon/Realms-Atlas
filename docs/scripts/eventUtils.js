@@ -4,8 +4,9 @@ window.onload = async () => {
 
     const p2pID = new URLSearchParams(window.location.search).get("id")
 
-    mapDB  = await new DataBase();
-    mapHdl = await new MapHandeler(!p2pID);
+    isHost = !p2pID;
+    storeDB  = await new DataBase();
+    mapHdl = await new MapHandeler();
     p2p    = await new P2P(p2pID);
 
     if (p2pID)
@@ -13,7 +14,7 @@ window.onload = async () => {
 
     
     try {
-        const savedData = await mapDB.getData("mapData");
+        const savedData = await storeDB.getData("mapData");
         if (savedData) {
             const decompData = fflate.gunzipSync(savedData);
             loadImg(URL.createObjectURL(new Blob([decompData], { type: "image/webp" })));
@@ -56,7 +57,7 @@ document.getElementById("uploadImg").addEventListener("change", async function (
         const arrayBuffer = await file.arrayBuffer();
         const compData = fflate.gzipSync(new Uint8Array(arrayBuffer), { level: 9 });
 
-        mapDB.saveData("mapData", compData);
+        storeDB.saveData("mapData", compData);
         p2p.sendData({
             type: "img",
             filename: file.name,
@@ -80,7 +81,7 @@ document.getElementById("imgUrl").addEventListener("change", async function () {
 
     try {
         const compData = fflate.gzipSync(url, { level: 9 });
-        await mapDB.saveData("mapData", compData);
+        await storeDB.saveData("mapData", compData);
 
         p2p.sendData({
             type: "url",
@@ -104,44 +105,41 @@ function showError(message, error = null) {
 
 class PopDiv {
     #popup = null;
-    constructor(id) {
-        const bg = document.createElement("div");
-        bg.className = "bgPopup hide";
-        document.querySelector("main").appendChild(bg);
-        this.#popup = bg;
+    constructor(tag) {
+        this.#popup = document.createElement("div");
+        this.#popup.id = "bgPopup";
+        document.querySelector("main").appendChild(this.#popup);
 
-        switch (id) {
+        switch (tag) {
             case "delLayer":
-                this.#createDelLayer();
+                const contDiv = this.#createContent(
+                   "delLayer",
+                    `<h2>Are you sure you want to delete this layer?</h2>
+                     <button id="deleteBtn">Delete</button>
+                     <button id="cancelBtn">Cancel</button>`
+                );
+                this.hide();
+
+                contDiv.querySelector("#deleteBtn").addEventListener("click", () => mapHdl.deleteLayer());
+                contDiv.querySelector("#cancelBtn").addEventListener("click", () => this.hide());
                 break;
             case "shareURL":
                 break;
             default:
-                this.#createMsg(id);
+                this.#createContent({
+                    id: "loadMsg",
+                    cont: `<h2>${tag}</h2>`
+                });
         }
     }
 
-    #createDelLayer() {
-        const cont = document.createElement("div");
-        cont.className = "delLayer";
-        cont.innerHTML =
-            `<h2>Are you sure you want to delete this layer?</h2>
-            <button id="deleteBtn">Delete</button>
-            <button id="cancelBtn">Cancel</button>`;
+    #createContent(id, cont) {
+        const contDiv = document.createElement("div");
+        contDiv.id = id;
+        contDiv.innerHTML = cont;
 
-        this.#popup.appendChild(cont);
-
-        cont.querySelector("#deleteBtn").addEventListener("click", () => mapHdl.deleteLayer());
-        cont.querySelector("#cancelBtn").addEventListener("click", () => this.hide());
-    }
-    #createMsg(msg) {
-        const cont = document.createElement("div");
-        cont.className = "loadMsg";
-        cont.innerHTML =
-            `<h2>${msg}</h2>`;
-
-        this.#popup.appendChild(cont);
-        this.show();
+        this.#popup.appendChild(contDiv);
+        return contDiv;
     }
 
     show() {
@@ -162,7 +160,7 @@ class DataBase {
     constructor() {
         return (async () => {
             await new Promise((resolve, reject) => {
-                const request = indexedDB.open("mapDB", 1);
+                const request = indexedDB.open("storeDB", 1);
 
                 request.onupgradeneeded = (event) => {
                     const dataBase = event.target.result;
@@ -210,11 +208,11 @@ class P2P {
     #connect = [];
     #peerID = null;
     constructor(hostID) {
-        const peer = hostID ? new Peer() : new Peer(this.#peerID = crypto.randomUUID());
+        const peer = !isHost ? new Peer() : new Peer(this.#peerID = crypto.randomUUID());
 
         peer.on("open", (clientID) => {
-            console.log(`Peer ID: ${hostID ? "Client" : "Host"} - ${clientID}`);
-            if (hostID) {
+            console.log(`Peer ID: ${!isHost ? "Client" : "Host"} - ${clientID}`);
+            if (!isHost) {
                 const conn = peer.connect(hostID);
                 this.#connect.push(conn);
 
@@ -230,7 +228,7 @@ class P2P {
             conn.on("data", (data) => this.#dataHdl(data));
             conn.on("error", (error) => showError("Connection error.", error));
 
-            conn.on("open", async () => this.sendData({ type: "init", data: await mapDB.getData("mapData") }) );
+            conn.on("open", async () => this.sendData({ type: "init", data: await storeDB.getData("mapData") }) );
         });
     }
 

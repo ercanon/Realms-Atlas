@@ -91,13 +91,10 @@ class MapHandeler {
     #map = null;
     #sidebar = null;
     #activeLayer = null;
-    constructor(isHost) {
-        const docuMain = document.querySelector("main");
-
+    constructor() {
         /*>---------- [ Map Construct ] ----------<*/
         const mapDiv = document.createElement("div");
-        mapDiv.id = "mapRender";
-        docuMain.appendChild(mapDiv);
+        document.querySelector("main").appendChild(mapDiv);
 
         this.#map = L.map(mapDiv, {
             crs: L.CRS.Simple,
@@ -127,55 +124,28 @@ class MapHandeler {
         }
 
         /*>---------- [ Search Construct ] ----------<*/
+        const leftSide = document.createElement("div");
+        leftSide.id = "sidecolumn";
+        mapDiv.appendChild(leftSide);
+
         L.control.search({
             position: "topleft",
+            container: "sidecolumn",
             autoCollapse: true
         }).addTo(this.#map);
+        leftSide.removeAttribute("style");
 
         /*>---------- [ Sidebar Construct ] ----------<*/
-        const sidebarDiv = document.createElement("div");
-        sidebarDiv.id = "sidebar";
-        sidebarDiv.className = "leaflet-sidebar collapsed";
-
-        this.#sidebar = L.control.sidebar({
-            position: "left",
-            container: "sidebar",
-            autopan: true
-        }).addTo(this.#map);
+        this.#sidebar = new SidebarHandeler(this.#map, leftSide);
 
         //Info Panel
-        const infoDiv = document.createElement("div");
-        this.#sidebar.addPanel({
-            id: "markdown-panel",
-            tab: `<svg style="vertical-align: middle; width: 2rem; height: 2rem;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-	                <path d="M8 7.333V10.667M14 8C14 11.98 11.98 14 8 14C4.02 14 2 11.98 2 8C2 4.02 4.02 2 8 2C11.98 2 14 4.02 14 8Z" stroke="#000000" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round"/>
-	                <circle cx="8" cy="5" r="0.667" fill="#000000"/>
-                  </svg>`,
-            title: "Map Info",
-            pane: infoDiv,
-        });
-
-        if (isHost) {
-            const editor = document.createElement("textarea");
-            editor.id = "markdown-editor";
-            editor.placeholder = "Write in Markdown(.md)...";
-            infoDiv.appendChild(editor);
-
-            editor.addEventListener("change", () => preview.innerHTML = marked.parse(editor.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
-        }
-        const preview = document.createElement("div");
-        preview.id = "markdown-preview";
-        infoDiv.appendChild(preview);
+        this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
 
         //Index Panel
-        this.#sidebar.addPanel({
-            id: 'markIndex',
-            tab: `<svg style="vertical-align: middle; width: 2rem; height: 2rem;" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-	                <path d="M 3 3 L 1 3 L 1 5 L 3 5 L 3 3 Z M 3 7 L 1 7 L 1 9 L 3 9 L 3 7 Z M 1 11 L 3 11 L 3 13 L 1 13 L 1 11 Z M 15 3 L 5 3 L 5 5 L 15 5 L 15 3 Z M 15 7 L 5 7 L 5 9 L 15 9 L 15 7 Z M 5 11 L 15 11 L 15 13 L 5 13 L 5 11 Z" fill="#000000"/>
-                  </svg>`,
-            title: "Markers Index",
-            button: 'https://github.com/noerw/leaflet-sidebar-v2',
-        });   
+        this.#sidebar.createSpotPanel("Spot Index", `<i class="fa-solid fa-list"></i>`)
+
+        //Marker Panel
+        this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`);
 
         /*>---------- [ Marker Construct ] ----------<*/
         this.#map.on("click", (e) => {
@@ -187,8 +157,6 @@ class MapHandeler {
         /*>---------- [ Post-Construct ] ----------<*/
         this.#map.getContainer().classList.add("hide");
     }
-
-    /*>---------- [ Map Layer ] ----------<*/
     loadLayer(img, { lvl, res }) {
         const bounds = [[0, 0], [-img.height / Math.pow(2, lvl), img.width / Math.pow(2, lvl)]];
         this.#map.setMaxBounds(bounds);
@@ -207,18 +175,100 @@ class MapHandeler {
 
     async deleteLayer() {
         this.#activeLayer.remove();
-        await mapDB.delData("mapData");
+        await storeDB.delData("mapData");
         p2p.sendData({ type: "del" })
 
         this.#map.getContainer().classList.add("hide");
-        this.closePopup();
-    }
-
-    closePopup() {
         this.#delLayerPop.hide();
     }
+}
 
-    /*>---------- [ Sidebar ] ----------<*/
+class SidebarHandeler {
+    #sidebar = null;
+    constructor(map, cont = null) {
+        this.#sidebar = L.control.sidebar({
+            position: "left",
+            closeButton: true,
+            autopan: true
+        }).addTo(map);
+        cont?.appendChild(this.#sidebar.getContainer());
+    }
+    #createPanel(title, tab) {
+        const pane = document.getElementById("panel-template").content.cloneNode(true).querySelector("#pane");
+        pane.querySelector(".leaflet-sidebar-header").firstChild.nodeValue = title;
+        const id = `${title.substring(0, title.indexOf(" "))}-panel`
+
+        this.#sidebar.addPanel({
+            title,
+            id,
+            tab,
+            pane
+        });
+        return pane;
+    }
+
+    createInfoPanel(title, tab) {
+        const infoPanel = this.#createPanel(
+            title,
+            tab
+        );
+        infoPanel.classList.add("md-panel");
+
+        if (isHost) {
+            const editorDiv = document.createElement("textarea");
+            editorDiv.id = "md-editor";
+            editorDiv.placeholder = "Write in Markdown(.md)...";
+
+            infoPanel.appendChild(editorDiv);
+
+            editorDiv.addEventListener("input", () => previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
+            editorDiv.addEventListener("change", () => console.log("Sending Data"));
+        }
+
+        const previewDiv = document.createElement("div");
+        previewDiv.id = "md-preview";
+        infoPanel.appendChild(previewDiv);
+
+        return infoPanel;
+    }
+    createSpotPanel(title, tab) {
+        const indexPanel = this.#createPanel(
+            title,
+            tab
+        );
+
+        if (isHost) {
+            const spotName = document.createElement("input");
+            spotName.type = "text";
+            spotName.placeholder = "Spot Name";
+            spotName.classList.id = "spotName";
+
+            const tokenColor = document.createElement("input");
+            tokenColor.type = "color";
+            tokenColor.classList.add("spotColor");
+
+            const markColor = document.createElement("input");
+            markColor.type = "color";
+            markColor.classList.add("spotColor");
+
+            const newSpotBtn = document.createElement("button");
+            newSpotBtn.innerHTML = `<i class="fa-solid fa-plus">`;
+            newSpotBtn.id = "newSpotBtn";
+
+            indexPanel.appendChild(spotName);
+            indexPanel.appendChild(tokenColor);
+            indexPanel.appendChild(markColor);
+            indexPanel.appendChild(newSpotBtn);
+
+            //spotName.addEventListener("change", () => );
+            //tokenColor.addEventListener("change", () => );
+            //markColor.addEventListener("change", () => );
+            const spotHdl = document.getElementById("spot-template").content.cloneNode(true);
+            newSpotBtn.addEventListener("click", () => indexPanel.insertBefore(spotHdl.cloneNode(true), newSpotBtn));
+        }
+
+        return indexPanel;
+    }
 }
 
 
