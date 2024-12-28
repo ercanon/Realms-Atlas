@@ -1,15 +1,16 @@
 /*>--------------- { EventListeners } ---------------<*/
-window.onload = async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const loadDataPop = new PopDiv("Loading previous session data...");
 
     const p2pID = new URLSearchParams(window.location.search).get("id")
 
     isHost = !p2pID;
+    templateList = document.querySelectorAll("template");
     storeDB  = await new DataBase();
     mapHdl = await new MapHandeler();
     p2p    = await new P2P(p2pID);
 
-    if (p2pID)
+    if (!isHost)
         ["fileInput", "shareBtn"].forEach((id) => document.getElementById(id).classList.add("hide"));
 
     
@@ -26,7 +27,7 @@ window.onload = async () => {
     finally {
         loadDataPop.delete();
     }
-};
+});
 
 document.getElementById("shareBtn").addEventListener("click", async () => { 
     try {
@@ -107,35 +108,43 @@ class PopDiv {
     #popup = null;
     constructor(tag) {
         this.#popup = document.createElement("div");
-        this.#popup.id = "bgPopup";
+        this.#popup.classList.add("bgPopup");
         document.querySelector("main").appendChild(this.#popup);
 
         switch (tag) {
             case "delLayer":
                 const contDiv = this.#createContent(
-                   "delLayer",
-                    `<h2>Are you sure you want to delete this layer?</h2>
-                     <button id="deleteBtn">Delete</button>
-                     <button id="cancelBtn">Cancel</button>`
+                    `<h2>Are you sure you want to delete this layer?</h2>`,
+                    "delLayer"
                 );
                 this.hide();
 
-                contDiv.querySelector("#deleteBtn").addEventListener("click", () => mapHdl.deleteLayer());
-                contDiv.querySelector("#cancelBtn").addEventListener("click", () => this.hide());
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "Delete";
+                deleteBtn.classList.add("deleteBtn");
+
+                const cancelBtn = document.createElement("button");
+                cancelBtn.innerHTML = "Cancel";
+                cancelBtn.classList.add("cancelBtn");
+
+                contDiv.appendChild(deleteBtn);
+                contDiv.appendChild(cancelBtn);
+
+                deleteBtn.addEventListener("click", () => mapHdl.deleteLayer());
+                cancelBtn.addEventListener("click", () => this.hide());
                 break;
             case "shareURL":
                 break;
             default:
-                this.#createContent({
-                    id: "loadMsg",
-                    cont: `<h2>${tag}</h2>`
-                });
+                this.#createContent(
+                    `<h2>${tag}</h2>`
+                );
         }
     }
 
-    #createContent(id, cont) {
+    #createContent(cont, tag = "") {
         const contDiv = document.createElement("div");
-        contDiv.id = id;
+        contDiv.classList.add("contPopup");
         contDiv.innerHTML = cont;
 
         this.#popup.appendChild(contDiv);

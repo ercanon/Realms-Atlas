@@ -1,4 +1,4 @@
-/*>--------------- { MapHandeler } ---------------<*/
+/*>--------------- { Map Handeler } ---------------<*/
 const CanvasLayer = L.GridLayer.extend({
     options: {
         // The maximum zoom level up to which this layer will be displayed (inclusive).
@@ -86,6 +86,138 @@ const svgIcon = L.DivIcon.extend({
         return parser.parseFromString(svgText, "image/svg+xml");
     }
 });
+const dynSidebar = L.Control.Sidebar.extend({
+    addPanel: function (t) {
+        var e, i, s, o, n;
+        return i = L.DomUtil.create("li", t.disabled ? "disabled" : ""),
+            (s = L.DomUtil.create("a", "", i)).href = "#" + t.id,
+            s.setAttribute("role", "tab"),
+            s.innerHTML = t.tab,
+            i._sidebar = this,
+            i._id = t.id,
+            i._button = t.button,
+            t.title && "<" !== t.title[0] && (i.title = t.title),
+            "bottom" === t.position ? this._tabContainerBottom.appendChild(i) : this._tabContainerTop.appendChild(i),
+            this._tabitems.push(i),
+            t.pane instanceof HTMLElement ? (e = t.pane,
+                this._paneContainer.appendChild(e)) : (e = L.DomUtil.create("DIV", "leaflet-sidebar-pane", this._paneContainer),
+                n = "",
+                t.title && (n += `<h1 class="leaflet-sidebar-header">` + t.title),
+                (this.options.closeButton || t.closeIcon) && (n += `<span class="leaflet-sidebar-close"> ${typeof t.closeIcon === "string" ? t.closeIcon : `<i class="fa fa-caret-${this.options.position}"></i>`}</span>`),
+                t.title && (n += "</h1>"),
+                e.innerHTML = n + (t.pane || "")),
+                e.id = t.id,
+                this._panes.push(e),
+                (o = e.querySelectorAll(".leaflet-sidebar-close")).length && (this._closeButtons.push(o[o.length - 1]),
+                    this._closeClick(o[o.length - 1], "on", t.closeFunct)),
+            this._tabClick(i, "on"),
+            this
+    },
+    removePanel: function (t) {
+        var e, i, s, o, n;
+        if (typeof t.closeIcon !== "string")
+            t = t.target.closest("div.leaflet-sidebar-pane.active").id;
+        for (e = 0; e < this._tabitems.length; e++)
+            if (this._tabitems[e]._id === t) {
+                s = this._tabitems[e],
+                    this._tabClick(s, "off"),
+                    s.remove(),
+                    this._tabitems.splice(e, 1);
+                break
+            }
+        for (e = 0; e < this._panes.length; e++)
+            if (this._panes[e].id === t) {
+                for (n = (o = this._panes[e]).querySelectorAll(".leaflet-sidebar-close"),
+                    i = 0; i < n.length; i++)
+                    this._closeClick(n[i], "off");
+                o.remove(),
+                    this._panes.splice(e, 1);
+                break
+            }
+        return this
+    },
+    _closeClick: function (t, e, functs = []) {
+        if (Array.isArray(functs) && functs.length > 0)
+            functs.forEach((f) => L.DomEvent[e](t, "click", f || this.onCloseClick, this));       
+        else 
+            L.DomEvent[e](t, "click", this.onCloseClick, this);
+    },
+    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }) {
+        const id = `${title.substring(0, title.indexOf(" "))}-panel`
+        return this.addPanel({
+            title,
+            id,
+            tab,
+            closeIcon,
+            closeFunct
+        })._paneContainer.querySelector(`#${id}`);
+    },
+
+    createInfoPanel: function (title, tab, closeBtn = {}) {
+        const infoPanel = this._createPanel(
+            title,
+            tab,
+            closeBtn
+        );
+        infoPanel.classList.add("md-panel");
+
+        if (isHost) {
+            const editorDiv = document.createElement("textarea");
+            editorDiv.classList.add("md-editor");
+            editorDiv.placeholder = "Write in Markdown(.md)...";
+
+            infoPanel.appendChild(editorDiv);
+
+            editorDiv.addEventListener("input", () => previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
+            editorDiv.addEventListener("change", () => console.log("Sending Data"));
+        }
+
+        const previewDiv = document.createElement("div");
+        previewDiv.classList.add("md-preview");
+        infoPanel.appendChild(previewDiv);
+
+        return infoPanel;
+    },
+    createSpotPanel: function (title, tab, closeBtn = {}) {
+        const indexPanel = this._createPanel(
+            title,
+            tab,
+            closeBtn
+        );
+
+        if (isHost) {
+            const spotName = document.createElement("input");
+            spotName.type = "text";
+            spotName.placeholder = "Spot Name";
+            spotName.classList.add("spotName");
+
+            const tokenColor = document.createElement("input");
+            tokenColor.type = "color";
+            tokenColor.classList.add("spotColor");
+
+            const markColor = document.createElement("input");
+            markColor.type = "color";
+            markColor.classList.add("spotColor");
+
+            const newSpotBtn = document.createElement("button");
+            newSpotBtn.innerHTML = `<i class="fa-solid fa-plus">`;
+            newSpotBtn.classList.add("newSpotBtn");
+
+            indexPanel.appendChild(spotName);
+            indexPanel.appendChild(tokenColor);
+            indexPanel.appendChild(markColor);
+            indexPanel.appendChild(newSpotBtn);
+
+            //spotName.addEventListener("change", () => );
+            //tokenColor.addEventListener("change", () => );
+            //markColor.addEventListener("change", () => );
+            const spotHdl = document.getElementById("spot-template").content.cloneNode(true);
+            newSpotBtn.addEventListener("click", () => indexPanel.insertBefore(spotHdl.cloneNode(true), newSpotBtn));
+        }
+
+        return indexPanel;
+    }
+})
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
@@ -136,7 +268,12 @@ class MapHandeler {
         leftSide.removeAttribute("style");
 
         /*>---------- [ Sidebar Construct ] ----------<*/
-        this.#sidebar = new SidebarHandeler(this.#map, leftSide);
+        this.#sidebar = new dynSidebar({
+            position: "left",
+            closeButton: false,
+            autopan: true
+        }).addTo(this.#map);
+        leftSide.appendChild(this.#sidebar.getContainer());
 
         //Info Panel
         this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
@@ -145,7 +282,10 @@ class MapHandeler {
         this.#sidebar.createSpotPanel("Spot Index", `<i class="fa-solid fa-list"></i>`)
 
         //Marker Panel
-        this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`);
+        this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+            closeIcon: `<i class="fa-solid fa-xmark"></i>`,
+            closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
+        });
 
         /*>---------- [ Marker Construct ] ----------<*/
         this.#map.on("click", (e) => {
@@ -180,94 +320,6 @@ class MapHandeler {
 
         this.#map.getContainer().classList.add("hide");
         this.#delLayerPop.hide();
-    }
-}
-
-class SidebarHandeler {
-    #sidebar = null;
-    constructor(map, cont = null) {
-        this.#sidebar = L.control.sidebar({
-            position: "left",
-            closeButton: true,
-            autopan: true
-        }).addTo(map);
-        cont?.appendChild(this.#sidebar.getContainer());
-    }
-    #createPanel(title, tab) {
-        const pane = document.getElementById("panel-template").content.cloneNode(true).querySelector("#pane");
-        pane.querySelector(".leaflet-sidebar-header").firstChild.nodeValue = title;
-        const id = `${title.substring(0, title.indexOf(" "))}-panel`
-
-        this.#sidebar.addPanel({
-            title,
-            id,
-            tab,
-            pane
-        });
-        return pane;
-    }
-
-    createInfoPanel(title, tab) {
-        const infoPanel = this.#createPanel(
-            title,
-            tab
-        );
-        infoPanel.classList.add("md-panel");
-
-        if (isHost) {
-            const editorDiv = document.createElement("textarea");
-            editorDiv.id = "md-editor";
-            editorDiv.placeholder = "Write in Markdown(.md)...";
-
-            infoPanel.appendChild(editorDiv);
-
-            editorDiv.addEventListener("input", () => previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
-            editorDiv.addEventListener("change", () => console.log("Sending Data"));
-        }
-
-        const previewDiv = document.createElement("div");
-        previewDiv.id = "md-preview";
-        infoPanel.appendChild(previewDiv);
-
-        return infoPanel;
-    }
-    createSpotPanel(title, tab) {
-        const indexPanel = this.#createPanel(
-            title,
-            tab
-        );
-
-        if (isHost) {
-            const spotName = document.createElement("input");
-            spotName.type = "text";
-            spotName.placeholder = "Spot Name";
-            spotName.classList.id = "spotName";
-
-            const tokenColor = document.createElement("input");
-            tokenColor.type = "color";
-            tokenColor.classList.add("spotColor");
-
-            const markColor = document.createElement("input");
-            markColor.type = "color";
-            markColor.classList.add("spotColor");
-
-            const newSpotBtn = document.createElement("button");
-            newSpotBtn.innerHTML = `<i class="fa-solid fa-plus">`;
-            newSpotBtn.id = "newSpotBtn";
-
-            indexPanel.appendChild(spotName);
-            indexPanel.appendChild(tokenColor);
-            indexPanel.appendChild(markColor);
-            indexPanel.appendChild(newSpotBtn);
-
-            //spotName.addEventListener("change", () => );
-            //tokenColor.addEventListener("change", () => );
-            //markColor.addEventListener("change", () => );
-            const spotHdl = document.getElementById("spot-template").content.cloneNode(true);
-            newSpotBtn.addEventListener("click", () => indexPanel.insertBefore(spotHdl.cloneNode(true), newSpotBtn));
-        }
-
-        return indexPanel;
     }
 }
 

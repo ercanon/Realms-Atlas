@@ -13,48 +13,45 @@ body {
     background-color: #f4f4f4;
 }
 
-h2 {
-    margin-bottom: 1rem;
-}
-
-
+/*>--------------- { Top Header } ---------------<*/
 header {
-    flex-shrink: 0;
-    width: 100%;
-    z-index: 1000;
     display: flex;
-    padding: 0.6rem 1.2rem;
-    box-sizing: border-box;
     align-items: center;
     justify-content: space-between;
+    width: 100%;
+    padding: 0.6rem 1.2rem;
+    background-color: #333;
     color: white;
     font-size: 0.8rem;
-    background-color: #333;
+    flex-shrink: 0;
+    z-index: 1000;
+    box-sizing: border-box;
 }
+    header h2 {
+        margin-bottom: 1rem;
+    }
 
 #shareBtn {
     padding: 0.4rem 0.5rem;
+    font-size: 0.93rem;
+    color: white;
+    background-color: #4CAF50;
+    border: none;
     border-radius: 0.3rem;
     cursor: pointer;
-    border: none;
-    color: white;
-    font-size: 0.93rem;
-    background-color: #4CAF50;
     transition: background-color 0.3s ease;
 }
     #shareBtn:hover {
         background-color: #45a049;
     }
 
-
-.hide {
-    display: none !important;
-}
+/*>--------------- { Body } ---------------<*/
 main {
     flex-grow: 1;
     margin: 0.6rem;
 }
 
+/*>---------- [ File Input ] ----------<*/
 #fileInput {
     position: absolute;
     top: 50%;
@@ -64,10 +61,14 @@ main {
     width: 100%;
     text-align: center;
 }
-
     #fileInput input {
         margin: 0.3rem;
         padding: 0.62rem;
         font-size: 1rem;
         width: calc(12.5rem + 15%);
     }
+
+/*>--------------- { Dinamic Class } ---------------<*/
+.hide {
+    display: none !important;
+}

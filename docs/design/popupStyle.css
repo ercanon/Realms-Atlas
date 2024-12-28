@@ -1,55 +1,59 @@
-#bgPopup {
+/*>--------------- { Background } ---------------<*/
+.bgPopup {
     display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
-    top: 0rem;
-    left: 0rem;
-    z-index: 900;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background-color: #80808080;
+    z-index: 900;
 }
 
-#loadMsg {
+/*>--------------- { Popup Content } ---------------<*/
+.contPopup {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #dcdcdc;
     border-radius: 1rem;
     width: calc(15.6rem + 20%);
 }
-    #loadMsg h2 {
-        margin-bottom: 0rem;
+    .delLayer h2 {
+        margin-bottom: 1rem;
     }
-
-#delLayer {
-    text-align: center;
-    padding: 2rem 1rem;
-    background-color: #dcdcdc;
-    border-radius: 1rem;
-    width: calc(15.6rem + 20%);
-}
-
-    #delLayer button {
+    .delLayer button {
         padding: 0.5rem 0.6rem;
         margin-inline: 0.5rem;
+        border: none;
         border-radius: 0.3rem;
         cursor: pointer;
-        border: none;
-        color: white;
         font-size: 1rem;
+        color: white;
         transition: background-color 0.3s ease;
     }
-    #deleteBtn {
-        background-color: #D32F2F;
+.deleteBtn {
+    background-color: #D32F2F;
+}
+    .deleteBtn:hover {
+        background-color: #B71C1C;
     }
-        #deleteBtn:hover {
-            background-color: #B71C1C;
-        }
 
-    #cancelBtn {
-        background-color: #808080;
+.cancelBtn {
+    background-color: #808080;
+}
+    .cancelBtn:hover {
+        background-color: #666666;
     }
-        #cancelBtn:hover {
-            background-color: #666666;
-        }
+
+/*>--------------- { Animations } ---------------<*/
+@keyframes zoom-in {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
