@@ -20,14 +20,32 @@
     }
 
 /*>--------------- { Search Btn } ---------------<*/
+.leaflet-control-search {
+    --btnDim: 2.5rem;
+}
+@media (max-width: 767px) {
+    .leaflet-control-search {
+        margin-left: 0rem !important;
+        border-left: none !important;
+    }
+        .leaflet-control-search.search-exp {
+            width: 100%;
+        }
+}
+@media (min-width: 768px) {
+    .leaflet-control-search.search-exp {
+        width: 40%;
+        max-width: 30rem;
+    }
+}
 .leaflet-control-search .search-input {
-    width: 24.53rem;
+    width: calc(100% - (var(--btnDim) * 2.1));
+    padding-right: 2.12rem;
 }
 
 .leaflet-control-search .search-button {
-    --btnDim: 2.5rem;
-    height: var(--btnDim) !important;
-    width: var(--btnDim) !important;
+    height: var(--btnDim);
+    width: var(--btnDim);
     background-size: 1.7rem !important;
     background-position: center 0.35rem !important;
 }
@@ -37,7 +55,23 @@
 
 /*>--------------- { SideBar } ---------------<*/
 .leaflet-sidebar {
-    top: 3.87rem !important;
+    top: 3.94rem !important;
+}
+@media (min-width: 768px) {
+    .leaflet-sidebar {
+        max-width: 30rem !important;
+    }
+    .leaflet-sidebar:not(.collapsed) {
+        width: 40% !important;
+        transition: none !important;
+    }
+    .leaflet-sidebar-pane {
+        min-width: 0rem !important;
+    }
+}
+
+.leaflet-sidebar-left.leaflet-touch {
+    border-top: 2px solid rgba(0, 0, 0, .2);
 }
 
 .leaflet-sidebar-pane {
@@ -61,7 +95,7 @@
     height: 100%;
 }
 
-.md-editor {
+.md-panel textarea {
     flex: 1;
     width: 100%;
     padding: 0.62rem;
@@ -70,7 +104,7 @@
 
 .md-preview {
     flex: 4;
-    overflow-y: scroll;
+    overflow-y: auto;
     word-wrap: break-word;
     text-align: justify;
     font-size: 1rem;
@@ -105,7 +139,17 @@
     }
 
 /*>---------- [ Spot Index ] ----------<*/
-.newSpotBtn {
+.marker-panel button{
+
+}
+
+.marker-panel input[type="text"] {
+}
+
+.marker-panel input[type="color"] {
+}
+
+#newMarker {
     --hoverColor: #0074d9;
     width: 100%;
     height: 3.12rem;
@@ -115,19 +159,19 @@
     cursor: pointer;
     transition: border-color 0.3s ease;
 }
-    .newSpotBtn:hover {
+    #newMarker:hover {
         border-color: var(--hoverColor);
     }
-.newSpotBtn i {
+#newMarker i {
     pointer-events: none;
     transition: color 0.3s ease;
 }
-    .newSpotBtn:hover i {
+    #newMarker:hover i {
         color: var(--hoverColor);
     }
 
 /* Spot Btn */
-.new-div {
+#new-div {
     width: 100%;
     height: 3.12rem;
     background-color: transparent;

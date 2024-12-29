@@ -65,7 +65,8 @@ main {
         margin: 0.3rem;
         padding: 0.62rem;
         font-size: 1rem;
-        width: calc(12.5rem + 15%);
+        width: 15%;
+        min-width: calc(12.5rem + 15%);
     }
 
 /*>--------------- { Dinamic Class } ---------------<*/

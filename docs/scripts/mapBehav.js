@@ -1,4 +1,4 @@
-/*>--------------- { Map Handeler } ---------------<*/
+/*>--------------- { Custom Leaflet Content } ---------------<*/
 const CanvasLayer = L.GridLayer.extend({
     options: {
         // The maximum zoom level up to which this layer will be displayed (inclusive).
@@ -7,86 +7,37 @@ const CanvasLayer = L.GridLayer.extend({
         //Image to be tiled and rendered in the map
         img: null
     },
+
+    /*>---------- [ Tile Rendering ] ----------<*/
     createTile: function (coords, done) {
-        const { x, y, z } = coords;
-        const resTile = this.options.tileSize * Math.pow(2, this.options.maxNativeZoom - z);
-
         const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
-        tileCanvas.width = tileCanvas.height = resTile;
+        const img = this.options.img;
+        tileCanvas.width = tileCanvas.height = this.options.tileSize * Math.pow(2, this.options.maxNativeZoom - coords.z);
 
-        this._getDims(x, y, resTile).then((dims) => {
+        this._getDims(coords, tileCanvas.width, img).then((dims) => {
             if (dims)
-                tileCanvas.getContext("2d").drawImage(this.options.img, ...dims);
+                tileCanvas.getContext("2d").drawImage(img, ...dims);
             else
                 console.warn(`Generating outside bounds: ${x}_${y}`);
             done(null, tileCanvas);
         }).catch((error) => {
-            showError("Error generating tiles.", error);
+            console.error("Error generating tiles.", error);
             done(error, null);
         });
+
         return tileCanvas;
     },
-    _getDims: async function (x, y, resTile) {
-        const img = this.options.img;
+    _getDims: async function ({ x, y }, tileRes, { width, height }) {
+        const tileX = x * tileRes;
+        const tileY = y * tileRes;
 
-        const tileX = x * resTile;
-        const tileY = y * resTile;
-
-        if (tileX >= img.width || tileY >= img.height || tileX < 0 || tileY < 0)
+        if (tileX >= width || tileY >= height || tileX < 0 || tileY < 0)
             return null;
 
-        return [tileX, tileY, resTile, resTile, 0, 0, resTile, resTile];
+        return [tileX, tileY, tileRes, tileRes, 0, 0, tileRes, tileRes];
     }
 });
-const svgIcon = L.DivIcon.extend({
-    options: {
-        markUrl: "icons/position-marker.svg",
-        markColor: "blue",
-
-        tokenUrl: "icons/bank.svg",
-        tokenColor: "red"
-    },
-    createIcon: function () {
-        const mark = this._loadSVG(this.options.markUrl).then((markSVG) => {
-            markSVG = markSVG.documentElement;
-            markSVG.querySelector("path")?.setAttribute("fill", this.options.markColor);
-
-            markSVG.style.transform = `scale(0.2) translate(-50%, -50%)`;
-            return markSVG;
-        });
-
-        const token = this._loadSVG(this.options.tokenUrl).then((tokenSVG) => {
-            tokenSVG = tokenSVG.documentElement;
-            tokenSVG.querySelector("path")?.setAttribute("fill", this.options.tokenColor);
-
-            tokenSVG = tokenSVG.querySelector("g");
-            tokenSVG.style.transformOrigin = "center";
-            tokenSVG.style.transform = `scale(0.38) translate(0%, -50%)`;
-            return tokenSVG;
-        });
-
-        return Promise.all([mark, token]).then(([markSVG, tokenSVG]) => {
-            markSVG.appendChild(tokenSVG);
-            return markSVG;
-        });
-    },
-    getIconToken: function () {
-
-    },
-    getMarkColor: function () {
-
-    },
-    getIconColor: function () {
-
-    },
-    _loadSVG: async function (url) {
-        const response = await fetch(url);
-        const svgText = await response.text();
-        const parser = new DOMParser();
-        return parser.parseFromString(svgText, "image/svg+xml");
-    }
-});
-const dynSidebar = L.Control.Sidebar.extend({
+const DynSidebar = L.Control.Sidebar.extend({
     addPanel: function (t) {
         var e, i, s, o, n;
         return i = L.DomUtil.create("li", t.disabled ? "disabled" : ""),
@@ -142,34 +93,43 @@ const dynSidebar = L.Control.Sidebar.extend({
         else 
             L.DomEvent[e](t, "click", this.onCloseClick, this);
     },
-    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }) {
-        const id = `${title.substring(0, title.indexOf(" "))}-panel`
-        return this.addPanel({
+
+    /*>---------- [ Sidebar Construct ] ----------<*/
+    _loadPreview: async function (fileList, folder_extension, svgDiv)
+    {
+        
+    },
+
+    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }, addClass = null) {
+        const id = `${title.replace(/ /g, "_")}-panel`
+        const panel = this.addPanel({
             title,
             id,
             tab,
             closeIcon,
             closeFunct
         })._paneContainer.querySelector(`#${id}`);
-    },
 
-    createInfoPanel: function (title, tab, closeBtn = {}) {
+        panel.classList.add(addClass);
+        return panel;
+    },
+    createInfoPanel: function (title, tab, auxBtn = {}) {
         const infoPanel = this._createPanel(
             title,
             tab,
-            closeBtn
+            auxBtn,
+            "md-panel"
         );
-        infoPanel.classList.add("md-panel");
 
         if (isHost) {
             const editorDiv = document.createElement("textarea");
-            editorDiv.classList.add("md-editor");
             editorDiv.placeholder = "Write in Markdown(.md)...";
-
             infoPanel.appendChild(editorDiv);
 
-            editorDiv.addEventListener("input", () => previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
-            editorDiv.addEventListener("change", () => console.log("Sending Data"));
+            editorDiv.addEventListener("input", () =>
+                previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
+            editorDiv.addEventListener("change", () =>
+                console.log("Sending Data"));
         }
 
         const previewDiv = document.createElement("div");
@@ -178,46 +138,94 @@ const dynSidebar = L.Control.Sidebar.extend({
 
         return infoPanel;
     },
-    createSpotPanel: function (title, tab, closeBtn = {}) {
+    createMarkerPanel: function (title, tab, auxBtn = {}) {
         const indexPanel = this._createPanel(
             title,
             tab,
-            closeBtn
+            auxBtn,
+            "marker-panel"
         );
 
         if (isHost) {
-            const spotName = document.createElement("input");
-            spotName.type = "text";
-            spotName.placeholder = "Spot Name";
-            spotName.classList.add("spotName");
+            const template = tmplList.markerPanelTemplate.cloneNode(true)
+            const markerPanel = Object.fromEntries(
+                Array.from(template.children).map((child) => [child.id, child])
+            );
 
-            const tokenColor = document.createElement("input");
-            tokenColor.type = "color";
-            tokenColor.classList.add("spotColor");
+            this._loadPreview(["ancient-ruins", "bank", "barracks-tent", "block-house", "camping-tent", "castle", "church", "crypt-entrance", "desert-camp", "dungeon-gate", "factory", "forest", "gold-mine", "greek-temple", "harbor-dock", "hills", "holy-oak", "hut", "igloo", "island", "lighthouse", "magic-portal", "medieval-village", "peaks", "position-marker", "river", "shop", "smoking-volcano", "stakes-fence", "stone-tower", "tavern-sign", "tombstone", "treasure-map", "treehouse", "triple-gate", "watchtower", "water-mill", "well", "windmill", "wood-cabin"],
+                "icons_.svg", markerPanel.svgDiv);
 
-            const markColor = document.createElement("input");
-            markColor.type = "color";
-            markColor.classList.add("spotColor");
+            let activeMarker = null;
+            markerPanel.nameMarker.addEventListener("change", () => { });
+            markerPanel.colorSpot.addEventListener("change", () => { });
+            markerPanel.colorToken.addEventListener("change", () => { });
+            markerPanel.newMarker.addEventListener("click", () => 
+                new MarkerEntry(indexPanel, data, markerPanel.newMarker));
 
-            const newSpotBtn = document.createElement("button");
-            newSpotBtn.innerHTML = `<i class="fa-solid fa-plus">`;
-            newSpotBtn.classList.add("newSpotBtn");
-
-            indexPanel.appendChild(spotName);
-            indexPanel.appendChild(tokenColor);
-            indexPanel.appendChild(markColor);
-            indexPanel.appendChild(newSpotBtn);
-
-            //spotName.addEventListener("change", () => );
-            //tokenColor.addEventListener("change", () => );
-            //markColor.addEventListener("change", () => );
-            const spotHdl = document.getElementById("spot-template").content.cloneNode(true);
-            newSpotBtn.addEventListener("click", () => indexPanel.insertBefore(spotHdl.cloneNode(true), newSpotBtn));
+            indexPanel.appendChild(template);
         }
-
         return indexPanel;
+    },
+    createToolsPanel: function (title, tab, auxBtn = {}) {
+        const toolsPanel = this._createPanel(
+            title,
+            tab,
+            auxBtn,
+            "tools-panel"
+        );
+        return toolsPanel;
     }
 })
+const svgIcon = L.DivIcon.extend({
+    options: {
+        markUrl: "icons/position-marker.svg",
+        markColor: "blue",
+
+        tokenUrl: "icons/bank.svg",
+        tokenColor: "red"
+    },
+    createIcon: function () {
+        const mark = this._loadSVG(this.options.markUrl).then((markSVG) => {
+            markSVG = markSVG.documentElement;
+            markSVG.querySelector("path")?.setAttribute("fill", this.options.markColor);
+
+            markSVG.style.transform = `scale(0.2) translate(-50%, -50%)`;
+            return markSVG;
+        });
+
+        const token = this._loadSVG(this.options.tokenUrl).then((tokenSVG) => {
+            tokenSVG = tokenSVG.documentElement;
+            tokenSVG.querySelector("path")?.setAttribute("fill", this.options.tokenColor);
+
+            tokenSVG = tokenSVG.querySelector("g");
+            tokenSVG.style.transformOrigin = "center";
+            tokenSVG.style.transform = `scale(0.38) translate(0%, -50%)`;
+            return tokenSVG;
+        });
+
+        return Promise.all([mark, token]).then(([markSVG, tokenSVG]) => {
+            markSVG.appendChild(tokenSVG);
+            return markSVG;
+        });
+    },
+    getIconToken: function () {
+
+    },
+    getMarkColor: function () {
+
+    },
+    getIconColor: function () {
+
+    },
+    _loadSVG: async function (url) {
+        const response = await fetch(url);
+        const svgText = await response.text();
+        const parser = new DOMParser();
+        return parser.parseFromString(svgText, "image/svg+xml");
+    }
+});
+
+/*>--------------- { Map Handeler } ---------------<*/
 class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
@@ -226,7 +234,7 @@ class MapHandeler {
     constructor() {
         /*>---------- [ Map Construct ] ----------<*/
         const mapDiv = document.createElement("div");
-        document.querySelector("main").appendChild(mapDiv);
+        document.body.querySelector("main").appendChild(mapDiv);
 
         this.#map = L.map(mapDiv, {
             crs: L.CRS.Simple,
@@ -249,7 +257,8 @@ class MapHandeler {
             clearBtn.onAdd = () => {
                 var button = L.DomUtil.create("button", "clearBtn");
                 button.innerHTML = "Clear Map";
-                button.onclick = () => this.#delLayerPop.show();
+                button.onclick = () =>
+                    this.#delLayerPop.setState("remove");
                 return button;
             };
             clearBtn.addTo(this.#map);
@@ -268,7 +277,7 @@ class MapHandeler {
         leftSide.removeAttribute("style");
 
         /*>---------- [ Sidebar Construct ] ----------<*/
-        this.#sidebar = new dynSidebar({
+        this.#sidebar = new DynSidebar({
             position: "left",
             closeButton: false,
             autopan: true
@@ -279,25 +288,40 @@ class MapHandeler {
         this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
 
         //Index Panel
-        this.#sidebar.createSpotPanel("Spot Index", `<i class="fa-solid fa-list"></i>`)
+        this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`)
 
         //Marker Panel
-        this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
-            closeIcon: `<i class="fa-solid fa-xmark"></i>`,
-            closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
-        });
+        //this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+        //    closeIcon: `<i class="fa-solid fa-xmark"></i>`,
+        //    closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
+        //});
+
+        //Tools Panel
+        this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`)
+        
 
         /*>---------- [ Marker Construct ] ----------<*/
-        this.#map.on("click", (e) => {
-            const { lat, lng } = e.latlng;
+        //this.#map.on("click", (e) => {
+        //    const { lat, lng } = e.latlng;
 
-            L.marker([lat, lng], { icon: new svgIcon() }).addTo(this.#map);
-        });
+        //    L.marker([lat, lng], { icon: new svgIcon() }).addTo(this.#map);
+        //});
 
         /*>---------- [ Post-Construct ] ----------<*/
-        this.#map.getContainer().classList.add("hide");
+        this.#setMapState("add");
     }
-    loadLayer(img, { lvl, res }) {
+    #setMapState(state){
+        this.#map.getContainer().classList[state]("hide");
+    }
+
+    loadMapImg(inputSrc, options = { lvl: 4, res: 256 }) {
+        const img = new Image();
+        img.onload = () =>
+            this.loadMapLayer(img, options);
+        img.onerror = (event) => { throw new Error(event.target.error) };
+        img.src = inputSrc;
+    }
+    loadMapLayer(img, { lvl, res }) {
         const bounds = [[0, 0], [-img.height / Math.pow(2, lvl), img.width / Math.pow(2, lvl)]];
         this.#map.setMaxBounds(bounds);
         this.#map.fitBounds(bounds);
@@ -310,25 +334,34 @@ class MapHandeler {
             img
         }).addTo(this.#map);
 
-        this.#map.getContainer().classList.remove("hide");
+        this.#setMapState("remove");
     }
 
-    async deleteLayer() {
+    async deleteMapLayer() {
         this.#activeLayer.remove();
         await storeDB.delData("mapData");
         p2p.sendData({ type: "del" })
 
-        this.#map.getContainer().classList.add("hide");
-        this.#delLayerPop.hide();
+        this.#setMapState("add");
+        this.#delLayerPop.setState("add");
     }
 }
+class MarkerEntry {
+    #markerEntry = null;
+    constructor(parent, data, objBefore = null) {
+        const template = tmplList.markerEntryTemplate.cloneNode(true).children[0];
+        this.markerEntry = { [template.id]: template };
+        for (const child of template.children)
+            this.markerEntry[child.id] = child;
 
+        this.markerEntry.h2.innerHTML = data.updated.name;
 
+/*        this.markerEntry.div.addEventListener("click", () => );*/
 
-/*>--------------- { ImageHandeler } ---------------<*/
-function loadImg(inputSrc, options = { lvl: 4, res: 256 }) {
-    const img = new Image();
-    img.onload = () => mapHdl.loadLayer(img, options);
-    img.onerror = (event) => { throw new Error(event.target.error) };
-    img.src = inputSrc;
+        objBefore ? parent.insertBefore(template, objBefore) : parent.appendChild(template);
+    }
+
+    getProp(prop) {
+        return this.markerEntry[prop];
+    }
 }

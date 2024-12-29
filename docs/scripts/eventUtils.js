@@ -1,24 +1,98 @@
 /*>--------------- { EventListeners } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
+    tmplList = Object.fromEntries(
+        Array.from(document.querySelectorAll("template")).map((templ) => [templ.id, templ.content])
+    );
+
     const loadDataPop = new PopDiv("Loading previous session data...");
-
     const p2pID = new URLSearchParams(window.location.search).get("id")
+    isHost  = !p2pID;
 
-    isHost = !p2pID;
-    templateList = document.querySelectorAll("template");
-    storeDB  = await new DataBase();
-    mapHdl = await new MapHandeler();
-    p2p    = await new P2P(p2pID);
+    storeDB = await new DataBase();
+    mapHdl  = await new MapHandeler();
+    p2p     = await new P2P(p2pID);
 
+    const interactBtns = document.body.querySelector("#interactBtns"); //Why not getElementById(id)? Does not work, idk.
+    const fileInput = document.body.querySelector("#fileInput"); //Why not getElementById(id)? Does not work, idk.
     if (!isHost)
-        ["fileInput", "shareBtn"].forEach((id) => document.getElementById(id).classList.add("hide"));
+        [interactBtns, fileInput].forEach((element) => element.classList.add("hide"));
+    else
+    {
+        interactBtns.querySelector("#shareBtn").addEventListener("click", async () => {
+            try {
+                const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`;
 
+                if (navigator.share) {
+                    await navigator.share({
+                        title: "URL for your Realms' Atlas Spectators",
+                        url: shareURL,
+                    });
+                }
+                else {
+                    navigator.clipboard.writeText(shareURL);
+                    alert("URL copied to clipboard!");
+                }
+            }
+            catch (error) {
+                showError("Error sharing URL.", error);
+            }
+        });
+
+        fileInput.querySelector("#uploadImg").addEventListener("change", async function () {
+            const file = this.files?.[0];
+            if (!file)
+                return showError("No file selected.");
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const compData = fflate.gzipSync(new Uint8Array(arrayBuffer), { level: 9 });
+
+                storeDB.saveData("mapData", compData);
+                p2p.sendData({
+                    type: "img",
+                    filename: file.name,
+                    mimeType: file.type,
+                    data: compData,
+                });
+
+                mapHdl.loadMapImg(URL.createObjectURL(new Blob([arrayBuffer], { type: "image/webp" })));
+            }
+            catch (error) {
+                showError("Error loading input file.", error);
+            }
+            finally {
+                this.value = "";
+            }
+        })
+        fileInput.querySelector("#urlImg").addEventListener("change", async function () {
+            const url = this.value.trim();
+            if (!url)
+                return showError("Please, provide a valid image URL.");
+
+            try {
+                const compData = fflate.gzipSync(url, { level: 9 });
+                await storeDB.saveData("mapData", compData);
+
+                p2p.sendData({
+                    type: "url",
+                    data: compData,
+                });
+
+                mapHdl.loadMapImg(url);
+            }
+            catch (error) {
+                showError("Error loading image URL.", error);
+            }
+        })
+    }
     
     try {
-        const savedData = await storeDB.getData("mapData");
-        if (savedData) {
-            const decompData = fflate.gunzipSync(savedData);
-            loadImg(URL.createObjectURL(new Blob([decompData], { type: "image/webp" })));
+        if (isHost) {
+            const savedData = await storeDB.getData("mapData");
+            if (savedData) {
+                const decompData = fflate.gunzipSync(savedData);
+                mapHdl.loadMapImg(URL.createObjectURL(new Blob([decompData], { type: "image/webp" })));
+            }
         }
     }
     catch (error) {
@@ -28,73 +102,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadDataPop.delete();
     }
 });
-
-document.getElementById("shareBtn").addEventListener("click", async () => { 
-    try {
-        const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`; 
-
-        if (navigator.share) {
-            await navigator.share({
-                title: "URL for your Realms' Atlas Spectators",
-                url: shareURL,
-            });
-        }
-        else {
-            navigator.clipboard.writeText(shareURL);
-            alert("URL copied to clipboard!");
-        }
-    }
-    catch (error) {
-        showError("Error sharing URL.", error);
-    }
-});
-
-document.getElementById("uploadImg").addEventListener("change", async function () {
-    const file = this.files?.[0];
-    if (!file)
-        return showError("No file selected.");
-
-    try {
-        const arrayBuffer = await file.arrayBuffer();
-        const compData = fflate.gzipSync(new Uint8Array(arrayBuffer), { level: 9 });
-
-        storeDB.saveData("mapData", compData);
-        p2p.sendData({
-            type: "img",
-            filename: file.name,
-            mimeType: file.type,
-            data: compData,
-        });
-
-        loadImg(URL.createObjectURL(new Blob([arrayBuffer], { type: "image/webp" })));
-    }
-    catch (error) {
-        showError("Error loading input file.", error);
-    }
-    finally {
-        this.value = "";
-    }
-})
-document.getElementById("imgUrl").addEventListener("change", async function () {
-    const url = this.value.trim();
-    if (!url)
-        return showError("Please, provide a valid image URL.");
-
-    try {
-        const compData = fflate.gzipSync(url, { level: 9 });
-        await storeDB.saveData("mapData", compData);
-
-        p2p.sendData({
-            type: "url",
-            data: compData,
-        });
-
-        loadImg(url);
-    }
-    catch (error) {
-        showError("Error loading image URL.", error);
-    }
-})
 
 
 
@@ -106,18 +113,16 @@ function showError(message, error = null) {
 
 class PopDiv {
     #popup = null;
-    constructor(tag) {
-        this.#popup = document.createElement("div");
-        this.#popup.classList.add("bgPopup");
-        document.querySelector("main").appendChild(this.#popup);
+    constructor(type) {
+        this.#popup = tmplList.popupTemplate.cloneNode(true).children[0];
 
-        switch (tag) {
+        switch (type) {
             case "delLayer":
-                const contDiv = this.#createContent(
-                    `<h2>Are you sure you want to delete this layer?</h2>`,
+                const contDiv = this.#fillContent(
+                    `Are you sure you want to delete this layer?`,
                     "delLayer"
                 );
-                this.hide();
+                this.setState("add");
 
                 const deleteBtn = document.createElement("button");
                 deleteBtn.innerHTML = "Delete";
@@ -130,33 +135,28 @@ class PopDiv {
                 contDiv.appendChild(deleteBtn);
                 contDiv.appendChild(cancelBtn);
 
-                deleteBtn.addEventListener("click", () => mapHdl.deleteLayer());
-                cancelBtn.addEventListener("click", () => this.hide());
+                deleteBtn.addEventListener("click", () =>
+                    mapHdl.deleteMapLayer());
+                cancelBtn.addEventListener("click", () =>
+                    this.setState("add"));
                 break;
             case "shareURL":
                 break;
             default:
-                this.#createContent(
-                    `<h2>${tag}</h2>`
-                );
+                this.#fillContent(type);
         }
+        document.body.querySelector("main")?.appendChild(this.#popup);
+    }
+    #fillContent(msg, tag = "") {
+        const innerDiv = this.#popup.children[0];
+        if (tag)
+            innerDiv.classList.add(tag);
+        innerDiv.children[0].innerHTML = msg;
+        return innerDiv;
     }
 
-    #createContent(cont, tag = "") {
-        const contDiv = document.createElement("div");
-        contDiv.classList.add("contPopup");
-        contDiv.innerHTML = cont;
-
-        this.#popup.appendChild(contDiv);
-        return contDiv;
-    }
-
-    show() {
-        this.#popup.classList.remove("hide");
-    }
-
-    hide() {
-        this.#popup.classList.add("hide");
+    setState(state) {
+        this.#popup.classList[state]("hide");
     }
 
     delete() {
@@ -234,10 +234,13 @@ class P2P {
             console.log("New client connected:", conn.peer);
             this.#connect.push(conn);
 
-            conn.on("data", (data) => this.#dataHdl(data));
-            conn.on("error", (error) => showError("Connection error.", error));
+            conn.on("data", (data) =>
+                this.#dataHdl(data));
+            conn.on("error", (error) =>
+                showError("Connection error.", error));
 
-            conn.on("open", async () => this.sendData({ type: "init", data: await storeDB.getData("mapData") }) );
+            conn.on("open", async () =>
+                this.sendData({ type: "init", data: await storeDB.getData("mapData") }));
         });
     }
 
@@ -250,14 +253,14 @@ class P2P {
                         return console.warn("Receiving null data.")
                 case "img":
                     decompData = fflate.gunzipSync(income.data);
-                    loadImg(URL.createObjectURL(new Blob([decompData], { type: "image/webp" })));
+                    mapHdl.loadMapImg(URL.createObjectURL(new Blob([decompData], { type: "image/webp" })));
                     break;
                 case "url":
                     decompData = fflate.gunzipSync(income.data);
-                    loadImg(decompData);
+                    mapHdl.loadMapImg(decompData);
                     break;
                 case "del":
-                    mapHdl.deleteLayer();
+                    mapHdl.deleteMapLayer();
                     break;
                 default:
                     throw new Error("Invalid data type received.");

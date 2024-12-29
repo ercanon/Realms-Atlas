@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Realms' Atlas</title>
-    <link rel="stylesheet" href="design/mainStyle.css">
-    <link rel="stylesheet" href="design/mapStyle.css">
-    <link rel="stylesheet" href="design/popupStyle.css">
+
+    <!--Style Lib-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/css/leaflet-sidebar.min.css">
@@ -21,34 +20,57 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/leaflet.markercluster.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.js"></script>
+
+    <!--Style-->
+    <link rel="stylesheet" href="design/mainStyle.css">
+    <link rel="stylesheet" href="design/mapStyle.css">
+    <link rel="stylesheet" href="design/popupStyle.css">
+
+    <!--Scripts-->
+    <script src="scripts/mapBehav.js"></script>
+    <script src="scripts/eventUtils.js"></script>
 </head>
 <body>
     <!--Structure Templates-->
-    <template id="spot-template">
-        <div class="new-div">
-            <input type="checkbox" checked>
-            <h2> Spot </h2>
-            <button> <i class="fa-solid fa-trash"></i> </button>
+    <template id="popupTemplate">
+        <div class="bgPopup">
+            <div class="contPopup">
+                <h2></h2>
+            </div>
+        </div>
+    </template>
+
+    <template id="markerPanelTemplate">
+        <div id="svgDiv"></div>
+        <input type="text"  id="nameMarker" placeholder="Marker Name">
+        <input type="color" id="colorSpot" >
+        <input type="color" id="colorToken">
+        <button id="newMarker"><i class="fa-solid fa-plus"></i></button>
+    </template>
+
+    <template id="markerEntryTemplate">
+        <div id ="markerEntry">
+            <input type="checkbox" id ="isVisible" checked>
+            <h2 id="markerName"> Marker </h2>
+            <button id="markerDel"> <i class="fa-solid fa-trash"></i> </button>
         </div>
     </template>
 
     <!--Body Render-->
     <header>
         <h1>Realms' Atlas</h1>
-        <button id="shareBtn">Spectator URL</button>
-        <button id="dnldBtn"><i class="fa-solid fa-file-arrow-down"></i></button>
+        <div id="interactBtns">
+            <button id="shareBtn">Spectator URL</button>
+            <button><i class="fa-solid fa-file-arrow-down"></i></button>
+        </div>
     </header>
 
     <main>
         <div id="fileInput">
             <h2>Introduce una imagen o un enlace</h2>
             <input type="file" id="uploadImg" accept="image/*" /> <br>
-            <input type="text" id="imgUrl" placeholder="O pega un enlace de imagen aquí" /> <br>
+            <input type="text" id="urlImg" placeholder="O pega un enlace de imagen aquí" /> <br>
         </div>
     </main>
-
-    <!--Scripts-->
-    <script src="scripts/mapBehav.js"></script>
-    <script src="scripts/eventUtils.js"></script>
 </body>
 </html>
