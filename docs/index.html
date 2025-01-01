@@ -22,9 +22,9 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.js"></script>
 
     <!--Style-->
-    <link rel="stylesheet" href="design/mainStyle.css">
-    <link rel="stylesheet" href="design/mapStyle.css">
-    <link rel="stylesheet" href="design/popupStyle.css">
+    <link rel="stylesheet" href="styles/mainStyle.css">
+    <link rel="stylesheet" href="styles/mapStyle.css">
+    <link rel="stylesheet" href="styles/popupStyle.css">
 
     <!--Scripts-->
     <script src="scripts/mapBehav.js"></script>
@@ -34,22 +34,28 @@
     <!--Structure Templates-->
     <template id="popupTemplate">
         <div class="bgPopup">
-            <div class="contPopup">
+            <div>
                 <h2></h2>
             </div>
         </div>
     </template>
 
     <template id="markerPanelTemplate">
-        <div id="svgDiv"></div>
-        <input type="text"  id="nameMarker" placeholder="Marker Name">
-        <input type="color" id="colorSpot" >
+        <div id="svgDropdown">
+            <figure></figure>
+            <div>
+                <input type="text" placeholder="Search icons...">
+                <div id="svgGrid"></div>
+            </div>
+        </div>
+        <input type="text" id="nameMarker" placeholder="Marker Name">
+        <input type="color" id="colorSpot">
         <input type="color" id="colorToken">
         <button id="newMarker"><i class="fa-solid fa-plus"></i></button>
     </template>
 
     <template id="markerEntryTemplate">
-        <div id ="markerEntry">
+        <div class ="markerEntry">
             <input type="checkbox" id ="isVisible" checked>
             <h2 id="markerName"> Marker </h2>
             <button id="markerDel"> <i class="fa-solid fa-trash"></i> </button>
@@ -68,8 +74,8 @@
     <main>
         <div id="fileInput">
             <h2>Introduce una imagen o un enlace</h2>
-            <input type="file" id="uploadImg" accept="image/*" /> <br>
-            <input type="text" id="urlImg" placeholder="O pega un enlace de imagen aquí" /> <br>
+            <input type="file" accept="image/*" /> <br>
+            <input type="text" placeholder="Or paste an image url here" /> <br>
         </div>
     </main>
 </body>

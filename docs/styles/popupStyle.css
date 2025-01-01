@@ -13,26 +13,25 @@
 }
 
 /*>--------------- { Popup Content } ---------------<*/
-.contPopup {
+.bgPopup div {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #dcdcdc;
     border-radius: 1rem;
     width: calc(15.6rem + 20%);
 }
-    .delLayer h2 {
-        margin-bottom: 1rem;
-    }
-    .delLayer button {
-        padding: 0.5rem 0.6rem;
-        margin-inline: 0.5rem;
-        border: none;
-        border-radius: 0.3rem;
-        cursor: pointer;
-        font-size: 1rem;
-        color: white;
-        transition: background-color 0.3s ease;
-    }
+
+.delLayer button {
+    padding: 0.5rem 2rem;
+    margin-inline: 2rem;
+    margin-top: 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: white;
+    transition: background-color 0.3s ease;
+}
 .deleteBtn {
     background-color: #D32F2F;
 }

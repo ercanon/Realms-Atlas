@@ -1,10 +1,33 @@
 /*>--------------- { EventListeners } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
+    const loadDataPop = new PopDiv("Loading previous session data...");
+
     tmplList = Object.fromEntries(
         Array.from(document.querySelectorAll("template")).map((templ) => [templ.id, templ.content])
     );
 
-    const loadDataPop = new PopDiv("Loading previous session data...");
+    //// Import the functions you need from the SDKs you need
+    //import { initializeApp } from "firebase/app";
+    //import { getAnalytics } from "firebase/analytics";
+    //// TODO: Add SDKs for Firebase products that you want to use
+    //// https://firebase.google.com/docs/web/setup#available-libraries
+
+    //// Your web app's Firebase configuration
+    //// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    //const firebaseConfig = {
+    //    apiKey: "AIzaSyDe4BlhhKgw_6AhbhaWDYm_K6gYFZjpXw8",
+    //    authDomain: "realms-atlas.firebaseapp.com",
+    //    projectId: "realms-atlas",
+    //    storageBucket: "realms-atlas.firebasestorage.app",
+    //    messagingSenderId: "152043716829",
+    //    appId: "1:152043716829:web:d71f9a3b3da320b7f09b34",
+    //    measurementId: "G-MS41MYB512"
+    //};
+
+    //// Initialize Firebase
+    //const app = initializeApp(firebaseConfig);
+    //const analytics = getAnalytics(app);
+
     const p2pID = new URLSearchParams(window.location.search).get("id")
     isHost  = !p2pID;
 
@@ -12,8 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     mapHdl  = await new MapHandeler();
     p2p     = await new P2P(p2pID);
 
-    const interactBtns = document.body.querySelector("#interactBtns"); //Why not getElementById(id)? Does not work, idk.
-    const fileInput = document.body.querySelector("#fileInput"); //Why not getElementById(id)? Does not work, idk.
+    const interactBtns = document.body.querySelector("#interactBtns");
+    const fileInput = document.body.querySelector("#fileInput");
     if (!isHost)
         [interactBtns, fileInput].forEach((element) => element.classList.add("hide"));
     else
@@ -38,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        fileInput.querySelector("#uploadImg").addEventListener("change", async function () {
+        fileInput.querySelector(`:scope > input[type="file"]`).addEventListener("change", async function () {
             const file = this.files?.[0];
             if (!file)
                 return showError("No file selected.");
@@ -64,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 this.value = "";
             }
         })
-        fileInput.querySelector("#urlImg").addEventListener("change", async function () {
+        fileInput.querySelector(`:scope > input[type="text"]`).addEventListener("change", async function () {
             const url = this.value.trim();
             if (!url)
                 return showError("Please, provide a valid image URL.");
@@ -114,12 +137,12 @@ function showError(message, error = null) {
 class PopDiv {
     #popup = null;
     constructor(type) {
-        this.#popup = tmplList.popupTemplate.cloneNode(true).children[0];
+        this.#popup = tmplList.popupTemplate.cloneNode(true).querySelector(".bgPopup");
 
         switch (type) {
             case "delLayer":
                 const contDiv = this.#fillContent(
-                    `Are you sure you want to delete this layer?`,
+                    "Are you sure you want to delete this layer?",
                     "delLayer"
                 );
                 this.setState("add");
@@ -132,8 +155,7 @@ class PopDiv {
                 cancelBtn.innerHTML = "Cancel";
                 cancelBtn.classList.add("cancelBtn");
 
-                contDiv.appendChild(deleteBtn);
-                contDiv.appendChild(cancelBtn);
+                contDiv.append(deleteBtn, cancelBtn);
 
                 deleteBtn.addEventListener("click", () =>
                     mapHdl.deleteMapLayer());
@@ -148,10 +170,10 @@ class PopDiv {
         document.body.querySelector("main")?.appendChild(this.#popup);
     }
     #fillContent(msg, tag = "") {
-        const innerDiv = this.#popup.children[0];
+        const innerDiv = this.#popup.querySelector(":scope > div");
         if (tag)
             innerDiv.classList.add(tag);
-        innerDiv.children[0].innerHTML = msg;
+        innerDiv.querySelector(":scope > h2").innerHTML = msg;
         return innerDiv;
     }
 

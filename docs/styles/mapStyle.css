@@ -11,7 +11,7 @@
     color: #FFFFFF;
     background-color: #D32F2F;
     border: none;
-    border-radius: 0.3rem;
+    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
@@ -75,13 +75,13 @@
 }
 
 .leaflet-sidebar-pane {
-    --distPadding: 0.6rem;
-    padding-left: var(--distPadding) !important;
-    padding-right: var(--distPadding) !important;
+    --paddingPane: 0.6rem;
+    padding-left: var(--paddingPane) !important;
+    padding-right: var(--paddingPane) !important;
 }
 
 .leaflet-sidebar-header {
-    margin-bottom: var(--distPadding) !important;
+    margin-bottom: var(--paddingPane) !important;
 }
 
 .leaflet-sidebar-tabs>ul>li {
@@ -102,7 +102,7 @@
     resize: none;
 }
 
-.md-preview {
+.md-panel > div {
     flex: 4;
     overflow-y: auto;
     word-wrap: break-word;
@@ -111,34 +111,103 @@
     background-color: #f9f9f9;
     border-top: 0.06rem solid #ddd;
 }
-    .md-preview h1 {
+    .md-panel > div h1 {
         font-size: 1.5rem;
         margin-top: 1rem;
     }
-    .md-preview h2 {
+    .md-panel > div h2 {
         font-size: 1.25rem;
         margin-top: 0.75rem;
     }
-    .md-preview p {
+    .md-panel > div p {
         margin: 0.5rem 0;
     }
-    .md-preview code {
+    .md-panel > div code {
         background-color: #eee;
         padding: 0.12rem 0.25rem;
         border-radius: 0.78rem;
     }
-    .md-preview pre {
+    .md-panel > div pre {
         background-color: #eee;
         padding: 0.62rem;
-        border-radius: 0.31rem;
+        border-radius: 5px;
         overflow-x: auto;
     }
-    .md-preview a {
+    .md-panel > div a {
         color: blue;
         text-decoration: underline;
     }
 
 /*>---------- [ Spot Index ] ----------<*/
+#svgDropdown {
+    position: relative;
+    width: 100%;
+    padding: var(--paddingPane);
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+#svgDropdown > figure {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+#svgDropdown > div {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 300;
+}
+
+#svgDropdown > div > input[type="text"] {
+    padding: var(--paddingPane);
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 100%;
+}
+
+#svgGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(3.4rem, 1fr));
+    gap: var(--paddingPane);
+    padding: var(--paddingPane);
+    overflow-y: auto;
+    max-height: 15.5rem;
+}
+
+.icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+    .icon-item:hover {
+        background-color: #f0f0f0;
+        border-radius: 5px;
+    }
+    .icon-item svg {
+        width: 24px;
+        height: 24px;
+        margin-bottom: 5px;
+    }
+    .icon-item span {
+        font-size: 12px;
+        color: #555;
+        text-align: center;
+    }
+
 .marker-panel button{
 
 }
@@ -171,7 +240,7 @@
     }
 
 /* Spot Btn */
-#new-div {
+.markerEntry {
     width: 100%;
     height: 3.12rem;
     background-color: transparent;
@@ -181,7 +250,7 @@
     justify-content: space-between;
     opacity: 0;
     animation: fade-in 0.3s ease forwards;
-    margin-bottom: var(--distPadding);
+    margin-bottom: var(--paddingPane);
 }
 
 /*>--------------- { Animations } ---------------<*/

@@ -18,7 +18,7 @@ const CanvasLayer = L.GridLayer.extend({
             if (dims)
                 tileCanvas.getContext("2d").drawImage(img, ...dims);
             else
-                console.warn(`Generating outside bounds: ${x}_${y}`);
+                console.warn("Generating outside bounds:", coords);
             done(null, tileCanvas);
         }).catch((error) => {
             console.error("Error generating tiles.", error);
@@ -54,7 +54,7 @@ const DynSidebar = L.Control.Sidebar.extend({
                 this._paneContainer.appendChild(e)) : (e = L.DomUtil.create("DIV", "leaflet-sidebar-pane", this._paneContainer),
                 n = "",
                 t.title && (n += `<h1 class="leaflet-sidebar-header">` + t.title),
-                (this.options.closeButton || t.closeIcon) && (n += `<span class="leaflet-sidebar-close"> ${typeof t.closeIcon === "string" ? t.closeIcon : `<i class="fa fa-caret-${this.options.position}"></i>`}</span>`),
+                (this.options.closeButton || t.closeIcon) && (n += `<span class="leaflet-sidebar-close":scope > ${typeof t.closeIcon === "string" ? t.closeIcon : `<i class="fa fa-caret-${this.options.position}"></i>`}</span>`),
                 t.title && (n += "</h1>"),
                 e.innerHTML = n + (t.pane || "")),
                 e.id = t.id,
@@ -95,9 +95,47 @@ const DynSidebar = L.Control.Sidebar.extend({
     },
 
     /*>---------- [ Sidebar Construct ] ----------<*/
-    _loadPreview: async function (fileList, folder_extension, svgDiv)
+    _loadPreview: async function (indexPath, svgMenu)
     {
-        
+        const response = await fetch(indexPath);
+        const svgFiles = await response.json();
+        const svgGrid = svgMenu.querySelector("#svgGrid");
+
+        svgFiles.forEach(async (file) => {
+            const figure = document.createElement("figure");
+            const svgImg = document.createElement("img");
+            svgImg.src = file;
+
+            const nameObj = `${file.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ")}`;
+            figure.addEventListener("click", (event) => {
+                event.stopPropagation();
+
+                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
+                svgMenu.classList.add("hide");
+            });
+
+            const nameFig = document.createElement("figcaption");
+            nameFig.innerHTML = nameObj;
+
+            figure.append(svgImg, nameFig);
+            svgGrid.appendChild(figure);
+
+            if (file.includes("position-marker"))
+                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
+        });
+
+        svgMenu.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
+            event.stopPropagation();
+
+            const textInput = event.target.value.toLowerCase();
+            svgGrid.forEach((icon) => {
+                if (icon.querySelector("span").innerHTML.toLowerCase().includes(textInput))
+                    icon.classList.add("hide");
+                else
+                    icon.classList.remove("hide");
+            });
+        });
+        svgMenu.classList.add("hide");
     },
 
     _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }, addClass = null) {
@@ -133,7 +171,6 @@ const DynSidebar = L.Control.Sidebar.extend({
         }
 
         const previewDiv = document.createElement("div");
-        previewDiv.classList.add("md-preview");
         infoPanel.appendChild(previewDiv);
 
         return infoPanel;
@@ -152,15 +189,18 @@ const DynSidebar = L.Control.Sidebar.extend({
                 Array.from(template.children).map((child) => [child.id, child])
             );
 
-            this._loadPreview(["ancient-ruins", "bank", "barracks-tent", "block-house", "camping-tent", "castle", "church", "crypt-entrance", "desert-camp", "dungeon-gate", "factory", "forest", "gold-mine", "greek-temple", "harbor-dock", "hills", "holy-oak", "hut", "igloo", "island", "lighthouse", "magic-portal", "medieval-village", "peaks", "position-marker", "river", "shop", "smoking-volcano", "stakes-fence", "stone-tower", "tavern-sign", "tombstone", "treasure-map", "treehouse", "triple-gate", "watchtower", "water-mill", "well", "windmill", "wood-cabin"],
-                "icons_.svg", markerPanel.svgDiv);
+            const dropdownMenu = markerPanel.svgDropdown.querySelector(":scope > div");
+            this._loadPreview("icons/index.json", dropdownMenu);
 
             let activeMarker = null;
+            markerPanel.svgDropdown.addEventListener("click", () =>
+                dropdownMenu.classList.toggle("hide"));
+
             markerPanel.nameMarker.addEventListener("change", () => { });
             markerPanel.colorSpot.addEventListener("change", () => { });
             markerPanel.colorToken.addEventListener("change", () => { });
             markerPanel.newMarker.addEventListener("click", () => 
-                new MarkerEntry(indexPanel, data, markerPanel.newMarker));
+                new MarkerEntry(indexPanel, markerPanel.newMarker));
 
             indexPanel.appendChild(template);
         }
@@ -291,14 +331,13 @@ class MapHandeler {
         this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`)
 
         //Marker Panel
-        //this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
-        //    closeIcon: `<i class="fa-solid fa-xmark"></i>`,
-        //    closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
-        //});
+        /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+            closeIcon: `<i class="fa-solid fa-xmark"></i>`,
+            closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
+        });*/
 
         //Tools Panel
         this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`)
-        
 
         /*>---------- [ Marker Construct ] ----------<*/
         //this.#map.on("click", (e) => {
@@ -348,15 +387,13 @@ class MapHandeler {
 }
 class MarkerEntry {
     #markerEntry = null;
-    constructor(parent, data, objBefore = null) {
+    constructor(parent, objBefore = null) {
         const template = tmplList.markerEntryTemplate.cloneNode(true).children[0];
         this.markerEntry = { [template.id]: template };
         for (const child of template.children)
             this.markerEntry[child.id] = child;
 
-        this.markerEntry.h2.innerHTML = data.updated.name;
-
-/*        this.markerEntry.div.addEventListener("click", () => );*/
+      //this.markerEntry.div.addEventListener("click", () => );
 
         objBefore ? parent.insertBefore(template, objBefore) : parent.appendChild(template);
     }
