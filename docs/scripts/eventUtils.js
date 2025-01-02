@@ -1,10 +1,10 @@
 /*>--------------- { EventListeners } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
-    const loadDataPop = new PopDiv("Loading previous session data...");
-
     tmplList = Object.fromEntries(
-        Array.from(document.querySelectorAll("template")).map((templ) => [templ.id, templ.content])
+        [...document.querySelectorAll("template")].map((templ) => [templ.id, templ.content])
     );
+
+    const loadDataPop = new PopDiv("Loading previous session data...");
 
     //// Import the functions you need from the SDKs you need
     //import { initializeApp } from "firebase/app";
@@ -35,13 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     mapHdl  = await new MapHandeler();
     p2p     = await new P2P(p2pID);
 
-    const interactBtns = document.body.querySelector("#interactBtns");
-    const fileInput = document.body.querySelector("#fileInput");
+    const fileInput = document.getElementById("fileInput");
     if (!isHost)
-        [interactBtns, fileInput].forEach((element) => element.classList.add("hide"));
+        [shareBtn, fileInput].forEach((element) => element.classList.add("hide"));
     else
     {
-        interactBtns.querySelector("#shareBtn").addEventListener("click", async () => {
+        document.getElementById("shareBtn").addEventListener("click", async () => {
             try {
                 const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`;
 

@@ -25,18 +25,15 @@
     padding: 0.5rem 2rem;
     margin-inline: 2rem;
     margin-top: 1.5rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
     font-size: 1rem;
-    color: white;
+    color: var(--white);
     transition: background-color 0.3s ease;
 }
 .deleteBtn {
-    background-color: #D32F2F;
+    background-color: var(--red);
 }
     .deleteBtn:hover {
-        background-color: #B71C1C;
+        background-color: var(--redHover);
     }
 
 .cancelBtn {

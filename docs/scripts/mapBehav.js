@@ -11,23 +11,25 @@ const CanvasLayer = L.GridLayer.extend({
     /*>---------- [ Tile Rendering ] ----------<*/
     createTile: function (coords, done) {
         const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
-        const img = this.options.img;
-        tileCanvas.width = tileCanvas.height = this.options.tileSize * Math.pow(2, this.options.maxNativeZoom - coords.z);
+        const { img, tileSize, maxNativeZoom } = this.options;
+        tileCanvas.width = tileCanvas.height = tileSize * Math.pow(2, maxNativeZoom - coords.z);
 
-        this._getDims(coords, tileCanvas.width, img).then((dims) => {
-            if (dims)
-                tileCanvas.getContext("2d").drawImage(img, ...dims);
-            else
-                console.warn("Generating outside bounds:", coords);
-            done(null, tileCanvas);
-        }).catch((error) => {
-            console.error("Error generating tiles.", error);
-            done(error, null);
-        });
+        this._tileDims(coords, tileCanvas.width, img)
+            .then((dims) => {
+                if (dims)
+                    tileCanvas.getContext("2d").drawImage(img, ...dims);
+                else
+                    console.warn("Generating outside bounds:", coords);
+                done(null, tileCanvas);
+            })
+            .catch((error) => {
+                console.error("Error generating tiles.", error);
+                done(error, null);
+            });
 
         return tileCanvas;
     },
-    _getDims: async function ({ x, y }, tileRes, { width, height }) {
+    _tileDims: async function ({ x, y }, tileRes, { width, height }) {
         const tileX = x * tileRes;
         const tileY = y * tileRes;
 
@@ -38,6 +40,9 @@ const CanvasLayer = L.GridLayer.extend({
     }
 });
 const DynSidebar = L.Control.Sidebar.extend({
+    options: {
+        iconList: { }
+    },
     addPanel: function (t) {
         var e, i, s, o, n;
         return i = L.DomUtil.create("li", t.disabled ? "disabled" : ""),
@@ -95,125 +100,138 @@ const DynSidebar = L.Control.Sidebar.extend({
     },
 
     /*>---------- [ Sidebar Construct ] ----------<*/
-    _loadPreview: async function (indexPath, svgMenu)
-    {
-        const response = await fetch(indexPath);
-        const svgFiles = await response.json();
-        const svgGrid = svgMenu.querySelector("#svgGrid");
-
-        svgFiles.forEach(async (file) => {
-            const figure = document.createElement("figure");
-            const svgImg = document.createElement("img");
-            svgImg.src = file;
-
-            const nameObj = `${file.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ")}`;
-            figure.addEventListener("click", (event) => {
-                event.stopPropagation();
-
-                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
-                svgMenu.classList.add("hide");
-            });
-
-            const nameFig = document.createElement("figcaption");
-            nameFig.innerHTML = nameObj;
-
-            figure.append(svgImg, nameFig);
-            svgGrid.appendChild(figure);
-
-            if (file.includes("position-marker"))
-                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
-        });
-
-        svgMenu.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
-            event.stopPropagation();
-
-            const textInput = event.target.value.toLowerCase();
-            svgGrid.forEach((icon) => {
-                if (icon.querySelector("span").innerHTML.toLowerCase().includes(textInput))
-                    icon.classList.add("hide");
-                else
-                    icon.classList.remove("hide");
-            });
-        });
-        svgMenu.classList.add("hide");
-    },
-
-    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }, addClass = null) {
+    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }) {
         const id = `${title.replace(/ /g, "_")}-panel`
-        const panel = this.addPanel({
+        return this.addPanel({
             title,
             id,
             tab,
             closeIcon,
             closeFunct
         })._paneContainer.querySelector(`#${id}`);
-
-        panel.classList.add(addClass);
-        return panel;
     },
     createInfoPanel: function (title, tab, auxBtn = {}) {
-        const infoPanel = this._createPanel(
+        const panel = this._createPanel(
             title,
             tab,
-            auxBtn,
-            "md-panel"
+            auxBtn
         );
+        panel.classList.add("info-panel");
 
         if (isHost) {
-            const editorDiv = document.createElement("textarea");
-            editorDiv.placeholder = "Write in Markdown(.md)...";
-            infoPanel.appendChild(editorDiv);
-
-            editorDiv.addEventListener("input", () =>
-                previewDiv.innerHTML = marked.parse(editorDiv.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
-            editorDiv.addEventListener("change", () =>
-                console.log("Sending Data"));
-        }
-
-        const previewDiv = document.createElement("div");
-        infoPanel.appendChild(previewDiv);
-
-        return infoPanel;
-    },
-    createMarkerPanel: function (title, tab, auxBtn = {}) {
-        const indexPanel = this._createPanel(
-            title,
-            tab,
-            auxBtn,
-            "marker-panel"
-        );
-
-        if (isHost) {
-            const template = tmplList.markerPanelTemplate.cloneNode(true)
-            const markerPanel = Object.fromEntries(
-                Array.from(template.children).map((child) => [child.id, child])
+            const infoPanel = tmplList.infoPanelTemplate.cloneNode(true);
+            const { textarea, div } = Object.fromEntries(
+                [...infoPanel.children].map((child) => [child.localName, child])
             );
 
-            const dropdownMenu = markerPanel.svgDropdown.querySelector(":scope > div");
-            this._loadPreview("icons/index.json", dropdownMenu);
+            textarea.addEventListener("input", (event) =>
+                div.innerHTML = marked.parse(event.target.value.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, "")));
+            textarea.addEventListener("change", (event) =>
+                console.log("Sending Data"));
 
-            let activeMarker = null;
-            markerPanel.svgDropdown.addEventListener("click", () =>
-                dropdownMenu.classList.toggle("hide"));
-
-            markerPanel.nameMarker.addEventListener("change", () => { });
-            markerPanel.colorSpot.addEventListener("change", () => { });
-            markerPanel.colorToken.addEventListener("change", () => { });
-            markerPanel.newMarker.addEventListener("click", () => 
-                new MarkerEntry(indexPanel, markerPanel.newMarker));
-
-            indexPanel.appendChild(template);
+            panel.appendChild(infoPanel);
         }
-        return indexPanel;
+
+        return panel;
+    },
+    createMarkerPanel: function (title, tab, auxBtn = {}) {
+        const panel = this._createPanel(
+            title,
+            tab,
+            auxBtn
+        );
+
+        if (isHost) {
+            const markerPanel = tmplList.iconPanelTemplate.cloneNode(true);
+            const customIcon   = markerPanel.querySelector("#customIcon");
+            const dropdownIcon = markerPanel.querySelector("#dropdownIcon");
+            const indexEntry   = markerPanel.querySelector("#indexEntry");
+            const btnEntry     = markerPanel.querySelector("#btnEntry");
+
+            //id: customIcon
+            let selectedMarker = null;
+            const data = {
+                tokenMarker: customIcon.querySelector(":scope > figure"),
+                nameMarker:  customIcon.querySelector("#nameMarker"),
+                spotColor:   customIcon.querySelector("#spotColor"),
+                tokenColor:  customIcon.querySelector("#tokenColor")
+            }
+
+            data.tokenMarker.addEventListener("click", () =>
+                dropdownIcon.classList.toggle("hide"));
+            data.nameMarker.addEventListener("input", (event) => {
+                if (selectedMarker)
+                    selectedMarker.figcaption.innerHTML = event.target.value || event.target.placeholder
+            });
+            data.spotColor.addEventListener( "input", () => { });
+            data.tokenColor.addEventListener("input", () => { });
+
+            data.nameMarker.addEventListener("change", () => { });
+            data.spotColor.addEventListener( "change", () => { });
+            data.tokenColor.addEventListener("change", () => { });
+
+            //id: dropdownIcon
+            const dropdownGrid = dropdownIcon.querySelector(":scope > div");
+            Object.keys(this.options.iconList).forEach((key) => {
+                const figure = document.createElement("figure");
+                figure.innerHTML = this.options.iconList[key];
+                figure.querySelector(":scope > svg").removeAttribute("style");
+
+                const nameFig = document.createElement("figcaption");
+                nameFig.innerHTML = key;
+                figure.appendChild(nameFig);
+
+                figure.addEventListener("click", () => {
+                    data.tokenMarker.innerHTML = figure.innerHTML;
+                    dropdownIcon.classList.add("hide");
+                });
+
+                if (key.includes("position marker")) {
+                    dropdownGrid.prepend(figure);
+                    data.spotMarker = data.tokenMarker.innerHTML = figure.innerHTML;
+                }
+                else
+                  
+                dropdownGrid.appendChild(figure);
+            });
+            dropdownIcon.addEventListener("mouseleave", () =>
+                dropdownIcon.classList.add("hide"))
+
+            dropdownIcon.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
+                const textInput = event.target.value.toLowerCase();
+                [...dropdownGrid.children].forEach(async (icon) => {
+                    if (icon.querySelector("figcaption").innerHTML.toLowerCase().includes(textInput))
+                        icon.classList.remove("hide");
+                    else
+                        icon.classList.add("hide");
+                });
+            });
+            //id: btnEntry
+            btnEntry.addEventListener("click", (event) => 
+                new MarkerEntry(data, indexEntry, (marker) => {
+                    selectedMarker?.entry.classList.remove("active")
+
+                    if (selectedMarker === marker || !marker) 
+                        selectedMarker = null;
+                    else {
+                        selectedMarker = marker;
+                        selectedMarker.entry.classList.add("active")
+                    }
+                }));
+
+            dropdownIcon.classList.add("hide");
+            panel.appendChild(markerPanel);
+        }
+        return panel;
     },
     createToolsPanel: function (title, tab, auxBtn = {}) {
-        const toolsPanel = this._createPanel(
+        const panel = this._createPanel(
             title,
             tab,
             auxBtn,
             "tools-panel"
         );
-        return toolsPanel;
+        return panel;
     }
 })
 const svgIcon = L.DivIcon.extend({
@@ -248,15 +266,6 @@ const svgIcon = L.DivIcon.extend({
             return markSVG;
         });
     },
-    getIconToken: function () {
-
-    },
-    getMarkColor: function () {
-
-    },
-    getIconColor: function () {
-
-    },
     _loadSVG: async function (url) {
         const response = await fetch(url);
         const svgText = await response.text();
@@ -270,6 +279,7 @@ class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
     #sidebar = null;
+    #iconList = {};
     #activeLayer = null;
     constructor() {
         /*>---------- [ Map Construct ] ----------<*/
@@ -317,27 +327,32 @@ class MapHandeler {
         leftSide.removeAttribute("style");
 
         /*>---------- [ Sidebar Construct ] ----------<*/
-        this.#sidebar = new DynSidebar({
-            position: "left",
-            closeButton: false,
-            autopan: true
-        }).addTo(this.#map);
-        leftSide.appendChild(this.#sidebar.getContainer());
+        this.#fetchMapIcons("icons/index.json").then(() => {
+            this.#sidebar = new DynSidebar({
+                position: "left",
+                closeButton: false,
+                autopan: true,
+                iconList: this.#iconList
+            }).addTo(this.#map);
+            leftSide.appendChild(this.#sidebar.getContainer());
 
-        //Info Panel
-        this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
+            //Info Panel
+            this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
 
-        //Index Panel
-        this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`)
+            //Index Panel
+            this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`);
 
-        //Marker Panel
-        /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
-            closeIcon: `<i class="fa-solid fa-xmark"></i>`,
-            closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
-        });*/
+            //Marker Panel
+            /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+                closeIcon: `<i class="fa-solid fa-xmark"></i>`,
+                closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
+            });*/
 
-        //Tools Panel
-        this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`)
+            //Tools Panel
+            this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`);
+
+            //Map Distribution Panel
+        });
 
         /*>---------- [ Marker Construct ] ----------<*/
         //this.#map.on("click", (e) => {
@@ -348,6 +363,24 @@ class MapHandeler {
 
         /*>---------- [ Post-Construct ] ----------<*/
         this.#setMapState("add");
+    }
+    async #fetchMapIcons(indexPath) {
+        const response = await fetch(indexPath);
+        const iconFiles = await response.json();
+
+        this.#iconList = Object.fromEntries(
+            iconFiles.map((path) => {
+                const name = path.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ");
+                return [name, path];
+            })
+        );
+
+        const filePromises = Object.entries(this.#iconList).map(async ([name, path]) => {
+            const fileResponse = await fetch(path);
+            this.#iconList[name] = await fileResponse.text();
+        });
+
+        await Promise.all(filePromises);
     }
     #setMapState(state){
         this.#map.getContainer().classList[state]("hide");
@@ -379,26 +412,44 @@ class MapHandeler {
     async deleteMapLayer() {
         this.#activeLayer.remove();
         await storeDB.delData("mapData");
-        p2p.sendData({ type: "del" })
+        p2p.sendData({ type: "del" });
 
         this.#setMapState("add");
         this.#delLayerPop.setState("add");
     }
-}
+} 
+
 class MarkerEntry {
-    #markerEntry = null;
-    constructor(parent, objBefore = null) {
-        const template = tmplList.markerEntryTemplate.cloneNode(true).children[0];
-        this.markerEntry = { [template.id]: template };
-        for (const child of template.children)
-            this.markerEntry[child.id] = child;
+    #activeEntry = null;
+    #deleteEntry = null;
+    constructor(data, parent, updateSelected) {
+        this.entry = tmplList.markerEntryTemplate.cloneNode(true).querySelector(".markerEntry");
+        [...this.entry.children].forEach((child) => {
+            this[child.localName] = child;
+        });
+        this.figcaption = this.figure.querySelector(":scope > figcaption");
 
-      //this.markerEntry.div.addEventListener("click", () => );
+        this.figcaption.innerHTML = data.nameMarker.value || data.nameMarker.placeholder;
 
-        objBefore ? parent.insertBefore(template, objBefore) : parent.appendChild(template);
+        
+        this.figure.addEventListener("click", this.#activeEntry = () => {
+            //data.tokenMarker
+            data.nameMarker.value = this.figcaption.innerHTML;
+            //data.spotColor
+            //data.tokenColor
+            updateSelected(this);
+        });
+
+        this.button.addEventListener("click", this.#deleteEntry = () =>
+            this.destructor());
+
+        parent.appendChild(this.entry);
     }
 
-    getProp(prop) {
-        return this.markerEntry[prop];
+    destructor() {
+        this.figure.removeEventListener("click", this.#activeEntry);
+        this.button.removeEventListener("click", this.#deleteEntry);
+
+        this.entry.parentNode?.removeChild(this.entry);
     }
 }

@@ -8,21 +8,15 @@
     padding: 0.5rem;
     font-size: 0.81rem;
     font-weight: bold;
-    color: #FFFFFF;
-    background-color: #D32F2F;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    color: var(--white);
+    background-color: var(--red);
     transition: background-color 0.3s ease;
 }
     .clearBtn:hover {
-        background-color: #B71C1C;
+        background-color: var(--redHover);
     }
 
 /*>--------------- { Search Btn } ---------------<*/
-.leaflet-control-search {
-    --btnDim: 2.5rem;
-}
 @media (max-width: 767px) {
     .leaflet-control-search {
         margin-left: 0rem !important;
@@ -39,13 +33,13 @@
     }
 }
 .leaflet-control-search .search-input {
-    width: calc(100% - (var(--btnDim) * 2.1));
+    width: calc(100% - (var(--searchBtnDim) * 2.1));
     padding-right: 2.12rem;
 }
 
 .leaflet-control-search .search-button {
-    height: var(--btnDim);
-    width: var(--btnDim);
+    height: var(--searchBtnDim);
+    width: var(--searchBtnDim);
     background-size: 1.7rem !important;
     background-position: center 0.35rem !important;
 }
@@ -56,6 +50,7 @@
 /*>--------------- { SideBar } ---------------<*/
 .leaflet-sidebar {
     top: 3.94rem !important;
+    border-top: 2px solid rgba(0, 0, 0, .2);
 }
 @media (min-width: 768px) {
     .leaflet-sidebar {
@@ -70,18 +65,21 @@
     }
 }
 
-.leaflet-sidebar-left.leaflet-touch {
-    border-top: 2px solid rgba(0, 0, 0, .2);
+.leaflet-sidebar-content {
+    background-color: rgba(255,255,255,1) !important;
 }
 
 .leaflet-sidebar-pane {
-    --paddingPane: 0.6rem;
-    padding-left: var(--paddingPane) !important;
-    padding-right: var(--paddingPane) !important;
+    padding-inline: var(--layoutSpacing) !important;
 }
+    .leaflet-sidebar-pane.active {
+        display: flex !important;
+        flex-direction: column;
+        height: 100%;
+    }
 
 .leaflet-sidebar-header {
-    margin-bottom: var(--paddingPane) !important;
+    margin-bottom: var(--layoutSpacing) !important;
 }
 
 .leaflet-sidebar-tabs>ul>li {
@@ -89,169 +87,174 @@
 }
 
 /*>---------- [ Text Panel ] ----------<*/
-.md-panel.active{
-    display: flex !important;
-    flex-direction: column;
-    height: 100%;
-}
-
-.md-panel textarea {
+.info-panel textarea {
     flex: 1;
     width: 100%;
     padding: 0.62rem;
     resize: none;
 }
 
-.md-panel > div {
+.info-panel > div {
     flex: 4;
     overflow-y: auto;
     word-wrap: break-word;
     text-align: justify;
-    font-size: 1rem;
-    background-color: #f9f9f9;
-    border-top: 0.06rem solid #ddd;
+    font-size: 0.9rem;
 }
-    .md-panel > div h1 {
+    .info-panel > div h1 {
         font-size: 1.5rem;
         margin-top: 1rem;
     }
-    .md-panel > div h2 {
+    .info-panel > div h2 {
         font-size: 1.25rem;
         margin-top: 0.75rem;
     }
-    .md-panel > div p {
+    .info-panel > div p {
         margin: 0.5rem 0;
     }
-    .md-panel > div code {
+    .info-panel > div code {
         background-color: #eee;
         padding: 0.12rem 0.25rem;
         border-radius: 0.78rem;
     }
-    .md-panel > div pre {
+    .info-panel > div pre {
         background-color: #eee;
         padding: 0.62rem;
         border-radius: 5px;
         overflow-x: auto;
     }
-    .md-panel > div a {
-        color: blue;
+    .info-panel > div a {
+        color: var(--blue);
         text-decoration: underline;
     }
 
 /*>---------- [ Spot Index ] ----------<*/
-#svgDropdown {
-    position: relative;
-    width: 100%;
-    padding: var(--paddingPane);
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #fff;
-    cursor: pointer;
+#customIcon {
+    display: flex;
+    margin-bottom: var(--layoutSpacing);
+    font-size: 0.9rem;
 }
 
-#svgDropdown > figure {
-    font-size: 1rem;
+#customIcon > figure {
+    flex: 3;
+    text-align: center;
+    border: 1px solid #ccc;
+    background-color: var(--white);
     font-weight: bold;
 }
 
-#svgDropdown > div {
+#customIcon > div {
+    flex: 7;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: calc(var(--layoutSpacing) * 1.5);
+    margin-right: 0rem;
+    justify-content: space-between;
+}
+#customIcon > div input[type="text"] {
+    height: 1.7rem;
+}
+#customIcon > div p {
+    display: flex;
+    justify-content: space-between;
+    margin-inline: var(--layoutSpacing);
+}
+#customIcon > div input[type="color"] {
+    width: 55%;
+}
+
+
+#dropdownIcon {
     position: absolute;
-    top: 100%;
     left: 0;
     width: 100%;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #fff;
+    background-color: var(--white);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
     z-index: 300;
 }
-
-#svgDropdown > div > input[type="text"] {
-    padding: var(--paddingPane);
+#dropdownIcon > input[type="text"] {
+    padding: var(--layoutSpacing);
     border: none;
     border-bottom: 1px solid #ccc;
     width: 100%;
 }
-
-#svgGrid {
+#dropdownIcon > div {
     display: grid;
+    text-align: center;
     grid-template-columns: repeat(auto-fill, minmax(3.4rem, 1fr));
-    gap: var(--paddingPane);
-    padding: var(--paddingPane);
+    gap: var(--layoutSpacing);
+    padding: var(--layoutSpacing);
     overflow-y: auto;
     max-height: 15.5rem;
 }
-
-.icon-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-    .icon-item:hover {
-        background-color: #f0f0f0;
-        border-radius: 5px;
-    }
-    .icon-item svg {
-        width: 24px;
-        height: 24px;
-        margin-bottom: 5px;
-    }
-    .icon-item span {
-        font-size: 12px;
-        color: #555;
-        text-align: center;
-    }
-
-.marker-panel button{
-
+#dropdownIcon > div figure {
+    border: 2px solid transparent;
 }
 
-.marker-panel input[type="text"] {
+
+
+#indexEntry {
+    overflow-y: auto;
 }
 
-.marker-panel input[type="color"] {
-}
-
-#newMarker {
-    --hoverColor: #0074d9;
-    width: 100%;
-    height: 3.12rem;
-    font-size: 1.5rem;
-    background-color: transparent;
-    border: 0.13rem dashed #4c4c4c;
-    cursor: pointer;
-    transition: border-color 0.3s ease;
-}
-    #newMarker:hover {
-        border-color: var(--hoverColor);
-    }
-#newMarker i {
-    pointer-events: none;
-    transition: color 0.3s ease;
-}
-    #newMarker:hover i {
-        color: var(--hoverColor);
-    }
-
-/* Spot Btn */
 .markerEntry {
     width: 100%;
-    height: 3.12rem;
-    background-color: transparent;
-    /*    border: 2px dashed #007bff;*/
     display: flex;
-    align-items: center;
-    justify-content: space-between;
     opacity: 0;
     animation: fade-in 0.3s ease forwards;
-    margin-bottom: var(--paddingPane);
+    margin-block: var(--layoutSpacing);
+    font-size: 1.1rem;
 }
+.markerEntry > input[type="checkbox"] {
+    margin-right: var(--layoutSpacing);
+    width: 0.96rem;
+}
+.markerEntry > figure {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    padding-block: var(--layoutSpacing);
+    border: 2px solid transparent;
+}
+    #dropdownIcon > div figure:hover,
+    .markerEntry > figure:hover {
+        border-color: var(--blueHover);
+    }
+    .markerEntry.active > figure {
+        border-color: var(--blue);
+    }
+.markerEntry > button {
+    background: none;
+    font-size: inherit;
+    color: var(--red);
+    padding-left: var(--layoutSpacing);
+}
+    .markerEntry > i:hover {
+        color: var(--redHover);
+    }
+
+#btnEntry {
+    width: 100%;
+    font-size: 1.5rem;
+    background: none;
+    border: 0.13rem dashed #4c4c4c;
+    border-radius: 0px;
+    transition: border-color 0.3s ease;
+    margin-top: var(--layoutSpacing);
+}
+    #btnEntry:hover {
+        border-color: var(--blue);
+    }
+#btnEntry > i {
+    margin-block: var(--layoutSpacing);
+    transition: color 0.3s ease;
+}
+    #btnEntry:hover > i {
+        color: var(--blue);
+    }
 
 /*>--------------- { Animations } ---------------<*/
 @keyframes fade-in {
