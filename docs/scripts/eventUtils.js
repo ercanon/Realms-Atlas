@@ -1,10 +1,10 @@
 /*>--------------- { EventListeners } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
-    const loadDataPop = new PopDiv("Loading previous session data...");
-
     tmplList = Object.fromEntries(
         Array.from(document.querySelectorAll("template")).map((templ) => [templ.id, templ.content])
     );
+
+    const loadDataPop = new PopDiv("Loading previous session data...");
 
     //// Import the functions you need from the SDKs you need
     //import { initializeApp } from "firebase/app";

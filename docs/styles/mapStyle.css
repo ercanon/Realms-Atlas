@@ -107,7 +107,7 @@
     overflow-y: auto;
     word-wrap: break-word;
     text-align: justify;
-    font-size: 1rem;
+    font-size: 0.9rem;
     background-color: #f9f9f9;
     border-top: 0.06rem solid #ddd;
 }
@@ -139,10 +139,9 @@
     }
 
 /*>---------- [ Spot Index ] ----------<*/
-#svgDropdown {
+#iconDropdown {
     position: relative;
-    width: 100%;
-    padding: var(--paddingPane);
+    width: 40%;
     text-align: center;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -150,16 +149,16 @@
     cursor: pointer;
 }
 
-#svgDropdown > figure {
+#iconDropdown > figure {
     font-size: 1rem;
     font-weight: bold;
 }
 
-#svgDropdown > div {
+#iconDropdown > div {
     position: absolute;
     top: 100%;
     left: 0;
-    width: 100%;
+    width: 252%;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #fff;
@@ -169,14 +168,14 @@
     z-index: 300;
 }
 
-#svgDropdown > div > input[type="text"] {
+#iconDropdown > div > input[type="text"] {
     padding: var(--paddingPane);
     border: none;
     border-bottom: 1px solid #ccc;
     width: 100%;
 }
 
-#svgGrid {
+#iconGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(3.4rem, 1fr));
     gap: var(--paddingPane);

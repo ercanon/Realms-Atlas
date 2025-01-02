@@ -38,6 +38,9 @@ const CanvasLayer = L.GridLayer.extend({
     }
 });
 const DynSidebar = L.Control.Sidebar.extend({
+    options: {
+        iconList: { }
+    },
     addPanel: function (t) {
         var e, i, s, o, n;
         return i = L.DomUtil.create("li", t.disabled ? "disabled" : ""),
@@ -95,49 +98,6 @@ const DynSidebar = L.Control.Sidebar.extend({
     },
 
     /*>---------- [ Sidebar Construct ] ----------<*/
-    _loadPreview: async function (indexPath, svgMenu)
-    {
-        const response = await fetch(indexPath);
-        const svgFiles = await response.json();
-        const svgGrid = svgMenu.querySelector("#svgGrid");
-
-        svgFiles.forEach(async (file) => {
-            const figure = document.createElement("figure");
-            const svgImg = document.createElement("img");
-            svgImg.src = file;
-
-            const nameObj = `${file.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ")}`;
-            figure.addEventListener("click", (event) => {
-                event.stopPropagation();
-
-                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
-                svgMenu.classList.add("hide");
-            });
-
-            const nameFig = document.createElement("figcaption");
-            nameFig.innerHTML = nameObj;
-
-            figure.append(svgImg, nameFig);
-            svgGrid.appendChild(figure);
-
-            if (file.includes("position-marker"))
-                svgMenu.parentNode.querySelector(":scope > figure").innerHTML = figure.innerHTML;
-        });
-
-        svgMenu.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
-            event.stopPropagation();
-
-            const textInput = event.target.value.toLowerCase();
-            svgGrid.forEach((icon) => {
-                if (icon.querySelector("span").innerHTML.toLowerCase().includes(textInput))
-                    icon.classList.add("hide");
-                else
-                    icon.classList.remove("hide");
-            });
-        });
-        svgMenu.classList.add("hide");
-    },
-
     _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }, addClass = null) {
         const id = `${title.replace(/ /g, "_")}-panel`
         const panel = this.addPanel({
@@ -189,11 +149,50 @@ const DynSidebar = L.Control.Sidebar.extend({
                 Array.from(template.children).map((child) => [child.id, child])
             );
 
-            const dropdownMenu = markerPanel.svgDropdown.querySelector(":scope > div");
-            this._loadPreview("icons/index.json", dropdownMenu);
+            const dropdownBtn = markerPanel.iconDropdown.querySelector(":scope > figure")
+            const dropdownMenu = markerPanel.iconDropdown.querySelector(":scope > div");
+            const iconGrid = dropdownMenu.querySelector("#iconGrid");
+            Object.keys(this.options.iconList).forEach((key) => {
+                const figure = document.createElement("figure");
+                figure.innerHTML = this.options.iconList[key].file;
+                figure.querySelector(":scope > svg").removeAttribute("style");
+
+                const nameFig = document.createElement("figcaption");
+                nameFig.innerHTML = key;
+
+                figure.addEventListener("click", (event) => {
+                    event.stopPropagation();
+
+                    dropdownBtn.innerHTML = figure.innerHTML;
+                    dropdownMenu.classList.add("hide");
+                });
+
+                figure.appendChild(nameFig);
+
+                if (key.includes("marker")) {
+                    iconGrid.prepend(figure);
+                    dropdownBtn.innerHTML = figure.innerHTML;
+                }
+                else
+                    iconGrid.appendChild(figure);
+
+            });
+
+            dropdownMenu.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
+                event.stopPropagation();
+
+                const textInput = event.target.value.toLowerCase();
+                iconGrid.children.forEach((icon) => {
+                    if (icon.querySelector("figcaption").innerHTML.toLowerCase().includes(textInput))
+                        icon.classList.add("hide");
+                    else
+                        icon.classList.remove("hide");
+                });
+            });
+            dropdownMenu.classList.add("hide");
 
             let activeMarker = null;
-            markerPanel.svgDropdown.addEventListener("click", () =>
+            markerPanel.iconDropdown.addEventListener("click", () =>
                 dropdownMenu.classList.toggle("hide"));
 
             markerPanel.nameMarker.addEventListener("change", () => { });
@@ -270,6 +269,7 @@ class MapHandeler {
     #delLayerPop = new PopDiv("delLayer");
     #map = null;
     #sidebar = null;
+    #iconList = {};
     #activeLayer = null;
     constructor() {
         /*>---------- [ Map Construct ] ----------<*/
@@ -317,27 +317,32 @@ class MapHandeler {
         leftSide.removeAttribute("style");
 
         /*>---------- [ Sidebar Construct ] ----------<*/
-        this.#sidebar = new DynSidebar({
-            position: "left",
-            closeButton: false,
-            autopan: true
-        }).addTo(this.#map);
-        leftSide.appendChild(this.#sidebar.getContainer());
+        this.#fetchMapIcons("icons/index.json").then(() => {
+            this.#sidebar = new DynSidebar({
+                position: "left",
+                closeButton: false,
+                autopan: true,
+                iconList: this.#iconList
+            }).addTo(this.#map);
+            leftSide.appendChild(this.#sidebar.getContainer());
 
-        //Info Panel
-        this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
+            //Info Panel
+            this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
 
-        //Index Panel
-        this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`)
+            //Index Panel
+            this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`)
 
-        //Marker Panel
-        /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
-            closeIcon: `<i class="fa-solid fa-xmark"></i>`,
-            closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
-        });*/
+            //Marker Panel
+            /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+                closeIcon: `<i class="fa-solid fa-xmark"></i>`,
+                closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
+            });*/
 
-        //Tools Panel
-        this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`)
+            //Tools Panel
+            this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`)
+
+            //Map Distribution Panel
+        });
 
         /*>---------- [ Marker Construct ] ----------<*/
         //this.#map.on("click", (e) => {
@@ -348,6 +353,24 @@ class MapHandeler {
 
         /*>---------- [ Post-Construct ] ----------<*/
         this.#setMapState("add");
+    }
+    async #fetchMapIcons(indexPath) {
+        const response = await fetch(indexPath);
+        const iconFiles = await response.json();
+
+        this.#iconList = Object.fromEntries(
+            iconFiles.map((path) => {
+                const name = path.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ");
+                return [name, { file: path }];
+            })
+        );
+
+        const filePromises = Object.entries(this.#iconList).map(async ([name, path]) => {
+            const fileResponse = await fetch(path.file);
+            path.file = await fileResponse.text();
+        });
+
+        await Promise.all(filePromises);
     }
     #setMapState(state){
         this.#map.getContainer().classList[state]("hide");
