@@ -1,0 +1,113 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
+}
+
+:root {
+    /*Variables*/
+    --layoutSpacing: 0.6rem;
+    --searchBtnDim: 2.5rem;
+    /* Palette */
+    --white: white;
+    --black: black;
+    --red: #D32F2F;
+    --redHover: #B71C1C;
+    --blue: #0074d9;
+    --blueHover: #aaa;
+    --green: #4CAF50;
+    --greenHover: #3c8c41;
+    --gold: #f7bb4b;
+    --goldHover: #b48232;
+}
+
+button {
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+figure {
+    cursor: pointer;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+/*>--------------- { Top Header } ---------------<*/
+header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.6rem 1.2rem;
+    background-color: #333;
+    color: var(--white);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+header > h2 {
+    display: flex;
+    align-items: center;
+}
+header > div {
+    display: flex;
+    align-items: center;
+}
+#shareBtn {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.93rem;
+    color: var(--white);
+    background-color: var(--green);
+    transition: background-color 0.3s ease;
+}
+    #shareBtn:hover {
+        background-color: var(--greenHover);
+    }
+#dnldDatabase {
+    margin-left: 1.2rem;
+    height: 24px;
+    font-size: 1.5rem;
+    color: var(--gold);
+    background: none;
+    transition: color 0.3s ease;
+}
+    #dnldDatabase:hover {
+        color: var(--goldHover);
+    }
+
+/*>--------------- { Body } ---------------<*/
+main {
+    flex: 1;
+    margin: 0.6rem;
+}
+
+/*>---------- [ File Input ] ----------<*/
+#fileInput {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    width: 100%;
+    text-align: center;
+}
+#fileInput input {
+    margin: 0.3rem;
+    padding: 0.62rem;
+    font-size: 1rem;
+    width: 15%;
+    min-width: calc(12.5rem + 15%);
+}
+
+/*>--------------- { Dinamic Class } ---------------<*/
+.hide {
+    display: none !important;
+}
