@@ -17,6 +17,15 @@
     }
 
 /*>--------------- { Search Btn } ---------------<*/
+#sideColumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.leaflet-control-search {
+    width: var(--searchBtnDim);
+}
 @media (max-width: 767px) {
     .leaflet-control-search {
         margin-left: 0rem !important;
@@ -49,19 +58,20 @@
 
 /*>--------------- { SideBar } ---------------<*/
 .leaflet-sidebar {
-    top: 3.94rem !important;
+    flex: 1;
+    position: relative;
     border-top: 2px solid rgba(0, 0, 0, .2);
 }
 @media (min-width: 768px) {
     .leaflet-sidebar {
-        max-width: 30rem !important;
+        max-width: 30rem;
+        margin-bottom: 20px;
     }
     .leaflet-sidebar:not(.collapsed) {
-        width: 40% !important;
-        transition: none !important;
+        width: 40%;
     }
     .leaflet-sidebar-pane {
-        min-width: 0rem !important;
+        min-width: 0rem;
     }
 }
 
@@ -143,7 +153,7 @@
     font-weight: bold;
 }
 
-#customIcon > div {
+#customIcon > g {
     flex: 7;
     display: flex;
     flex-direction: column;
@@ -152,15 +162,15 @@
     margin-right: 0rem;
     justify-content: space-between;
 }
-#customIcon > div input[type="text"] {
+#nameMarker {
     height: 1.7rem;
 }
-#customIcon > div p {
+#customIcon p {
     display: flex;
     justify-content: space-between;
     margin-inline: var(--layoutSpacing);
 }
-#customIcon > div input[type="color"] {
+#customIcon input[type="color"] {
     width: 55%;
 }
 
@@ -181,7 +191,7 @@
     border-bottom: 1px solid #ccc;
     width: 100%;
 }
-#dropdownIcon > div {
+#dropdownIcon > g {
     display: grid;
     text-align: center;
     grid-template-columns: repeat(auto-fill, minmax(3.4rem, 1fr));
@@ -190,7 +200,7 @@
     overflow-y: auto;
     max-height: 15.5rem;
 }
-#dropdownIcon > div figure {
+#dropdownIcon > g figure {
     border: 2px solid transparent;
 }
 
@@ -207,15 +217,15 @@
     animation: fade-in 0.3s ease forwards;
     margin-block: var(--layoutSpacing);
     font-size: 1.1rem;
+    max-height: 4.9rem;
 }
 .markerEntry > input[type="checkbox"] {
-    margin-right: var(--layoutSpacing);
-    width: 0.96rem;
+    margin-inline: var(--layoutSpacing);
+    width: 1rem;
 }
 .markerEntry > figure {
     display: flex;
     flex: 1;
-    justify-content: center;
     padding-block: var(--layoutSpacing);
     border: 2px solid transparent;
 }
@@ -226,11 +236,14 @@
     .markerEntry.active > figure {
         border-color: var(--blue);
     }
+.markerEntry > figure > figcaption {
+    align-content: center;
+}
 .markerEntry > button {
     background: none;
     font-size: inherit;
     color: var(--red);
-    padding-left: var(--layoutSpacing);
+    padding-inline: var(--layoutSpacing);
 }
     .markerEntry > i:hover {
         color: var(--redHover);

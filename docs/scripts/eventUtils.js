@@ -1,32 +1,12 @@
 /*>--------------- { EventListeners } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
+    //Preload templates
     tmplList = Object.fromEntries(
-        [...document.querySelectorAll("template")].map((templ) => [templ.id, templ.content])
+        [...document.querySelectorAll("template")].map((tmpl) => [tmpl.id, tmpl.content])
     );
 
+    //Start loading initial data
     const loadDataPop = new PopDiv("Loading previous session data...");
-
-    //// Import the functions you need from the SDKs you need
-    //import { initializeApp } from "firebase/app";
-    //import { getAnalytics } from "firebase/analytics";
-    //// TODO: Add SDKs for Firebase products that you want to use
-    //// https://firebase.google.com/docs/web/setup#available-libraries
-
-    //// Your web app's Firebase configuration
-    //// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    //const firebaseConfig = {
-    //    apiKey: "AIzaSyDe4BlhhKgw_6AhbhaWDYm_K6gYFZjpXw8",
-    //    authDomain: "realms-atlas.firebaseapp.com",
-    //    projectId: "realms-atlas",
-    //    storageBucket: "realms-atlas.firebasestorage.app",
-    //    messagingSenderId: "152043716829",
-    //    appId: "1:152043716829:web:d71f9a3b3da320b7f09b34",
-    //    measurementId: "G-MS41MYB512"
-    //};
-
-    //// Initialize Firebase
-    //const app = initializeApp(firebaseConfig);
-    //const analytics = getAnalytics(app);
 
     const p2pID = new URLSearchParams(window.location.search).get("id")
     isHost  = !p2pID;

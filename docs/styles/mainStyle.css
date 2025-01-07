@@ -57,7 +57,7 @@ header > h2 {
     display: flex;
     align-items: center;
 }
-header > div {
+header > g {
     display: flex;
     align-items: center;
 }

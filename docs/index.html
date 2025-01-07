@@ -9,17 +9,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/css/leaflet-sidebar.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/MarkerCluster.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/MarkerCluster.min.css">
 
     <!--Lib-->
     <script src="https://cdn.jsdelivr.net/npm/fflate/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/peerjs/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/leaflet.markercluster.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster/dist/leaflet.markercluster.min.js"></script>
 
     <!--Style-->
     <link rel="stylesheet" href="styles/mainStyle.css">
@@ -46,10 +49,10 @@
     </template>
 
     <template id="iconPanelTemplate">
-        <div>
+        <g>
             <div id="customIcon">
                 <figure></figure>
-                <div>
+                <g>
                     <input type="text" id="nameMarker" placeholder="Marker Name">
                     <p> Marker Color
                         <input type="color" id="spotColor">
@@ -57,13 +60,13 @@
                     <p> Icon Color
                         <input type="color" id="tokenColor">
                     </p>
-                </div>
+                </g>
             </div>
             <div id="dropdownIcon">
                 <input type="text" placeholder="Search icons...">
-                <div></div>
+                <g></g>
             </div>
-        </div>
+        </g>
         <div id="indexEntry"></div>
         <button id="btnEntry">
             <i class="fa-solid fa-plus"></i>
@@ -73,9 +76,7 @@
     <template id="markerEntryTemplate">
         <div class="markerEntry">
             <input type="checkbox" checked>
-            <figure>
-                <figcaption></figcaption>
-            </figure>
+            <figure></figure>
             <button> 
                 <i class="fa-solid fa-trash"></i> 
             </button>
@@ -85,20 +86,20 @@
     <!--Body Render-->
     <header>
         <h1>Realms' Atlas</h1>
-        <div>
+        <g>
             <button id="shareBtn">Spectator URL</button>
             <button id="dnldDatabase">
                 <i class="fa-solid fa-file-arrow-down"></i>
             </button>
-        </div>
+        </g>
     </header>
 
     <main>
-        <div id="fileInput">
+        <g id="fileInput">
             <h2>Introduce una imagen o un enlace</h2>
             <input type="file" accept="image/*" /> <br>
             <input type="text" placeholder="Or paste an image url here" /> <br>
-        </div>
+        </g>
     </main>
 </body>
 </html>

@@ -1,35 +1,44 @@
 /*>--------------- { Custom Leaflet Content } ---------------<*/
 const CanvasLayer = L.GridLayer.extend({
     options: {
-        // The maximum zoom level up to which this layer will be displayed (inclusive).
         maxZoom: 8,
-
-        //Image to be tiled and rendered in the map
         img: null
     },
 
     /*>---------- [ Tile Rendering ] ----------<*/
-    createTile: function (coords, done) {
-        const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
-        const { img, tileSize, maxNativeZoom } = this.options;
-        tileCanvas.width = tileCanvas.height = tileSize * Math.pow(2, maxNativeZoom - coords.z);
+    _setView: function (t, e, i, n) {
+        var o = Math.round(e)
+            , o = void 0 !== this.options.maxZoom && o > this.options.maxZoom || void 0 !== this.options.minZoom && o < this.options.minZoom ? void 0 : this._clampZoom(o)
+            , s = this.options.updateWhenZooming && o !== this._tileZoom;
 
-        this._tileDims(coords, tileCanvas.width, img)
-            .then((dims) => {
-                if (dims)
-                    tileCanvas.getContext("2d").drawImage(img, ...dims);
-                else
-                    console.warn("Generating outside bounds:", coords);
-                done(null, tileCanvas);
-            })
-            .catch((error) => {
-                console.error("Error generating tiles.", error);
-                done(error, null);
-            });
+        if (o) {
+            const { tileSize, maxNativeZoom } = this.options;
+            this.tileRes = tileSize * Math.pow(2, maxNativeZoom - o);
+        }
+
+        n && !s || (this._tileZoom = o,
+            this._abortLoading && this._abortLoading(),
+            this._updateLevels(),
+            this._resetGrid(),
+            void 0 !== o && this._update(t),
+            i || this._pruneTiles(),
+            this._noPrune = !!i),
+            this._setZoomTransforms(t, e)
+    },
+    createTile: function (coords) {
+        const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
+        const { img } = this.options;
+        tileCanvas.width = tileCanvas.height = this.tileRes;
+
+        const dims = this._getTileDims(coords, tileCanvas.width, img);
+        if (dims)
+            tileCanvas.getContext("2d").drawImage(img, ...dims);
+        else
+            console.warn("Generating outside bounds:", coords);
 
         return tileCanvas;
     },
-    _tileDims: async function ({ x, y }, tileRes, { width, height }) {
+    _getTileDims: function ({ x, y }, tileRes, { width, height }) {
         const tileX = x * tileRes;
         const tileY = y * tileRes;
 
@@ -37,6 +46,125 @@ const CanvasLayer = L.GridLayer.extend({
             return null;
 
         return [tileX, tileY, tileRes, tileRes, 0, 0, tileRes, tileRes];
+    }
+});
+const MarkerEntry = L.DivIcon.extend({
+    options: {
+        defaultName: null,
+        markerRef: null,
+        markerPathRef: null
+    },
+    /**
+     * this.figure;
+     * this.figcaption;
+     * this.icon;
+     * this.spotColor;
+     * this.tokenColor;
+     */
+    initialize: function ({ data, parentEntry, updateSelected }) {
+        const { nameMarker, spotMarker, tokenMarker, spotColor, tokenColor } = data;
+        const entry = tmplList.markerEntryTemplate.cloneNode(true).querySelector(".markerEntry");
+
+        try {
+            //Create Spot
+            this.figure = entry.querySelector(":scope > figure");
+            this.figure.innerHTML = spotMarker;
+
+            this.icon = this.figure.querySelector(":scope > svg");
+            if (!this.icon) 
+                throw new Error("Invalid SVG Element.");
+
+            //Set color to Spot
+            this.icon.removeAttribute("style");
+            this.spotColor = this.icon.querySelector("path");
+            this.setColor("spotColor", spotColor.value);
+
+            //Create Token
+            this.setToken(tokenMarker, tokenColor.value);
+
+            //Create referenced Icon
+            this.options.markerRef = this.icon.cloneNode(false);
+            Object.assign(this.options.markerRef.style, {
+                width: "3rem",
+                height: "3rem",
+                transform: "translate(-50%, -50%)"
+            });
+
+            this.options.markerPathRef = document.createElementNS("http://www.w3.org/2000/svg", "use");
+            this.options.markerRef.appendChild(this.options.markerPathRef);
+
+            //Set Names
+            this.figcaption = document.createElement("figcaption");
+            this.figure.appendChild(this.figcaption);
+            this.setName(nameMarker.textContent);
+
+            //Set EventListeners
+            this.figure.addEventListener("click", this._activeEntry = () => {
+                updateSelected(this);
+                data.nameMarker.value = this.figcaption.textContent;
+                data.spotColor.value = this.spotColor.getAttribute("fill");
+                data.tokenColor.value = this.tokenColor?.getAttribute("fill");
+            });
+
+            const checkbox = entry.querySelector(`:scope > input[type="checkbox"]`);
+            checkbox.addEventListener("click", this._toggleVis = () => {
+            });
+
+            const button = entry.querySelector(":scope > button");
+            button.addEventListener("click", this._deleteEntry = () => {
+                updateSelected(null);
+                this.figure.removeEventListener("click", this._activeEntry);
+                checkbox.removeEventListener("click", this._toggleVis);
+                button.removeEventListener("click", this._deleteEntry);
+                this.entry.remove();
+            });
+
+            parentEntry.appendChild(entry);
+        }
+        catch (error) {
+            console.error("Error creating Marker Entry:", error);
+        }
+    },
+    setToken: function (tokenMarker, tokenColor = null) {
+        const token = tokenMarker.querySelector("g").cloneNode(true);
+        if (!token)
+            throw new Error("Invalid SVG Element.");
+
+        const path = token.querySelector(":scope > path");
+        const shape = path?.getAttribute("d");
+        if (!shape)
+            throw new Error("Invalid SVG Element.");
+
+        const color = this.tokenColor?.getAttribute("fill") || tokenColor;
+        this.tokenColor?.remove();
+        this.options.defaultName = tokenMarker.querySelector(":scope > figcaption").textContent;
+
+        if (this.spotColor.getAttribute("d") !== shape &&
+            this.tokenColor?.getAttribute("d") !== shape) {
+            Object.assign(token.style, {
+                transformOrigin: "center",
+                transform: "scale(0.4) translate(0%, -45%)"
+            });
+
+            this.tokenColor = path;
+            if (color)
+                this.setColor("tokenColor", color);
+
+            this.icon.appendChild(token);
+        }
+    },
+    setName: function (inputName) {
+        const { defaultName, markerPathRef } = this.options;
+        const name = inputName || defaultName || "Spot Marker";
+
+        this.figcaption.textContent = name;   
+        markerPathRef.setAttribute("href", `#${this.icon.id = name.replace(/ /g, "_")}`);
+    },
+    setColor: function (type, color) {
+        this[type]?.setAttribute("fill", color);
+    },
+    createIcon: function () {
+        return this.options.markerRef.cloneNode(true);
     }
 });
 const DynSidebar = L.Control.Sidebar.extend({
@@ -131,8 +259,6 @@ const DynSidebar = L.Control.Sidebar.extend({
 
             panel.appendChild(infoPanel);
         }
-
-        return panel;
     },
     createMarkerPanel: function (title, tab, auxBtn = {}) {
         const panel = this._createPanel(
@@ -143,86 +269,92 @@ const DynSidebar = L.Control.Sidebar.extend({
 
         if (isHost) {
             const markerPanel = tmplList.iconPanelTemplate.cloneNode(true);
-            const customIcon   = markerPanel.querySelector("#customIcon");
+            const customIcon = markerPanel.querySelector("#customIcon");
             const dropdownIcon = markerPanel.querySelector("#dropdownIcon");
-            const indexEntry   = markerPanel.querySelector("#indexEntry");
-            const btnEntry     = markerPanel.querySelector("#btnEntry");
 
             //id: customIcon
             let selectedMarker = null;
             const data = {
                 tokenMarker: customIcon.querySelector(":scope > figure"),
-                nameMarker:  customIcon.querySelector("#nameMarker"),
-                spotColor:   customIcon.querySelector("#spotColor"),
-                tokenColor:  customIcon.querySelector("#tokenColor")
+                nameMarker: customIcon.querySelector("#nameMarker"),
+                spotColor: customIcon.querySelector("#spotColor"),
+                tokenColor: customIcon.querySelector("#tokenColor")
             }
 
-            data.tokenMarker.addEventListener("click", () =>
+            data.tokenMarker.addEventListener("click", () => 
                 dropdownIcon.classList.toggle("hide"));
-            data.nameMarker.addEventListener("input", (event) => {
-                if (selectedMarker)
-                    selectedMarker.figcaption.innerHTML = event.target.value || event.target.placeholder
-            });
-            data.spotColor.addEventListener( "input", () => { });
-            data.tokenColor.addEventListener("input", () => { });
+            data.nameMarker.addEventListener("input", (event) => 
+                selectedMarker?.setName(event.target.value));
+            data.spotColor.addEventListener("input", (event) => 
+                selectedMarker?.setColor("spotColor", event.target.value));
+            data.tokenColor.addEventListener("input", (event) => 
+                selectedMarker?.setColor("tokenColor", event.target.value));
 
             data.nameMarker.addEventListener("change", () => { });
-            data.spotColor.addEventListener( "change", () => { });
+            data.spotColor.addEventListener("change", () => { });
             data.tokenColor.addEventListener("change", () => { });
 
             //id: dropdownIcon
-            const dropdownGrid = dropdownIcon.querySelector(":scope > div");
-            Object.keys(this.options.iconList).forEach((key) => {
+            const dropdownGrid = dropdownIcon.querySelector(":scope > g");
+            Object.entries(this.options.iconList).forEach(([key, iconHTML]) => {
                 const figure = document.createElement("figure");
-                figure.innerHTML = this.options.iconList[key];
+                figure.innerHTML = iconHTML;
                 figure.querySelector(":scope > svg").removeAttribute("style");
 
-                const nameFig = document.createElement("figcaption");
-                nameFig.innerHTML = key;
-                figure.appendChild(nameFig);
 
-                figure.addEventListener("click", () => {
-                    data.tokenMarker.innerHTML = figure.innerHTML;
-                    dropdownIcon.classList.add("hide");
-                });
+                const nameFig = document.createElement("figcaption");
+                nameFig.textContent = key;
+                figure.appendChild(nameFig);
 
                 if (key.includes("position marker")) {
                     dropdownGrid.prepend(figure);
-                    data.spotMarker = data.tokenMarker.innerHTML = figure.innerHTML;
+                    data.spotMarker = iconHTML;
+                    data.tokenMarker.innerHTML = figure.innerHTML;
                 }
                 else
-                  
-                dropdownGrid.appendChild(figure);
+                    dropdownGrid.appendChild(figure);
+
+                figure.addEventListener("click", () => {
+                    data.tokenMarker.innerHTML = figure.innerHTML;
+                    selectedMarker?.setToken(figure);
+                    dropdownIcon.classList.add("hide");
+                });
+
             });
             dropdownIcon.addEventListener("mouseleave", () =>
                 dropdownIcon.classList.add("hide"))
 
             dropdownIcon.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
                 const textInput = event.target.value.toLowerCase();
-                [...dropdownGrid.children].forEach(async (icon) => {
-                    if (icon.querySelector("figcaption").innerHTML.toLowerCase().includes(textInput))
-                        icon.classList.remove("hide");
-                    else
-                        icon.classList.add("hide");
-                });
+                [...dropdownGrid.children].forEach(async (icon) =>
+                    icon.classList.toggle("hide", !icon.querySelector("figcaption").textContent.toLowerCase().includes(textInput))
+                );
             });
-            //id: btnEntry
-            btnEntry.addEventListener("click", (event) => 
-                new MarkerEntry(data, indexEntry, (marker) => {
-                    selectedMarker?.entry.classList.remove("active")
 
-                    if (selectedMarker === marker || !marker) 
-                        selectedMarker = null;
-                    else {
-                        selectedMarker = marker;
-                        selectedMarker.entry.classList.add("active")
+            //id: btnEntry
+            const parentEntry = markerPanel.querySelector("#indexEntry");
+            markerPanel.querySelector("#btnEntry").addEventListener("click", () =>
+                new MarkerEntry({
+                    data,
+                    //iconSize,
+                    //iconAnchor,
+                    parentEntry,
+                    updateSelected: (marker) => {
+                        selectedMarker?.figure.parentNode.classList.remove("active");
+
+                        if (selectedMarker === marker || !marker)
+                            selectedMarker = null;
+                        else {
+                            selectedMarker = marker;
+                            marker.figure.parentNode.classList.add("active");
+                        }
                     }
                 }));
 
             dropdownIcon.classList.add("hide");
             panel.appendChild(markerPanel);
+            return () => { return selectedMarker };
         }
-        return panel;
     },
     createToolsPanel: function (title, tab, auxBtn = {}) {
         const panel = this._createPanel(
@@ -231,46 +363,6 @@ const DynSidebar = L.Control.Sidebar.extend({
             auxBtn,
             "tools-panel"
         );
-        return panel;
-    }
-})
-const svgIcon = L.DivIcon.extend({
-    options: {
-        markUrl: "icons/position-marker.svg",
-        markColor: "blue",
-
-        tokenUrl: "icons/bank.svg",
-        tokenColor: "red"
-    },
-    createIcon: function () {
-        const mark = this._loadSVG(this.options.markUrl).then((markSVG) => {
-            markSVG = markSVG.documentElement;
-            markSVG.querySelector("path")?.setAttribute("fill", this.options.markColor);
-
-            markSVG.style.transform = `scale(0.2) translate(-50%, -50%)`;
-            return markSVG;
-        });
-
-        const token = this._loadSVG(this.options.tokenUrl).then((tokenSVG) => {
-            tokenSVG = tokenSVG.documentElement;
-            tokenSVG.querySelector("path")?.setAttribute("fill", this.options.tokenColor);
-
-            tokenSVG = tokenSVG.querySelector("g");
-            tokenSVG.style.transformOrigin = "center";
-            tokenSVG.style.transform = `scale(0.38) translate(0%, -50%)`;
-            return tokenSVG;
-        });
-
-        return Promise.all([mark, token]).then(([markSVG, tokenSVG]) => {
-            markSVG.appendChild(tokenSVG);
-            return markSVG;
-        });
-    },
-    _loadSVG: async function (url) {
-        const response = await fetch(url);
-        const svgText = await response.text();
-        const parser = new DOMParser();
-        return parser.parseFromString(svgText, "image/svg+xml");
     }
 });
 
@@ -315,13 +407,13 @@ class MapHandeler {
         }
 
         /*>---------- [ Search Construct ] ----------<*/
-        const leftSide = document.createElement("div");
-        leftSide.id = "sidecolumn";
+        const leftSide = document.createElement("g");
+        leftSide.id = "sideColumn";
         mapDiv.appendChild(leftSide);
 
         L.control.search({
             position: "topleft",
-            container: "sidecolumn",
+            container: "sideColumn",
             autoCollapse: true
         }).addTo(this.#map);
         leftSide.removeAttribute("style");
@@ -340,7 +432,7 @@ class MapHandeler {
             this.#sidebar.createInfoPanel("Map Information", `<i class="fa-solid fa-circle-info"></i>`);
 
             //Index Panel
-            this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`);
+            const indexEntry = this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`);
 
             //Marker Panel
             /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
@@ -352,35 +444,56 @@ class MapHandeler {
             this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`);
 
             //Map Distribution Panel
+
+            //Settings Panel
+
+            /*>---------- [ Marker Construct ] ----------<*/
+            this.#map.pm.addControls({
+                position: 'topleft',
+                drawCircleMarker: false,
+                rotateMode: false,
+            });
+            if (isHost) {
+                this.#map.on("click", (e) => {
+                    const { lat, lng } = e.latlng;
+                    const selectedMarker = indexEntry();
+
+                    if (selectedMarker)
+                        L.marker([lat, lng], { icon: selectedMarker }).addTo(this.#map);
+                });
+            }
         });
 
-        /*>---------- [ Marker Construct ] ----------<*/
-        //this.#map.on("click", (e) => {
-        //    const { lat, lng } = e.latlng;
-
-        //    L.marker([lat, lng], { icon: new svgIcon() }).addTo(this.#map);
-        //});
 
         /*>---------- [ Post-Construct ] ----------<*/
         this.#setMapState("add");
     }
     async #fetchMapIcons(indexPath) {
-        const response = await fetch(indexPath);
-        const iconFiles = await response.json();
+        try {
+            const response = await fetch(indexPath);
+            if (!response.ok)
+                throw new Error(`Failed to fetch ${indexPath}: ${response.statusText}`);
+            const iconFiles = await response.json();
 
-        this.#iconList = Object.fromEntries(
-            iconFiles.map((path) => {
-                const name = path.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ");
-                return [name, path];
-            })
-        );
+            this.#iconList = Object.fromEntries(
+                iconFiles.map((path) => {
+                    const name = path.replace(/^icons\/|\.svg$/g, "").replace(/-/g, " ");
+                    return [name, path];
+                })
+            );
 
-        const filePromises = Object.entries(this.#iconList).map(async ([name, path]) => {
-            const fileResponse = await fetch(path);
-            this.#iconList[name] = await fileResponse.text();
-        });
+            const filePromises = Object.entries(this.#iconList).map(async ([name, path]) => {
+                const fileResponse = await fetch(path);
+                if (!fileResponse.ok)
+                    throw new Error(`Failed to fetch ${name}: ${fileResponse.statusText}`);
+                this.#iconList[name] = await fileResponse.text();
+            });
 
-        await Promise.all(filePromises);
+            await Promise.all(filePromises);
+        }
+        catch (error) {
+            console.error("Error loading SVG:", error);
+        }
     }
     #setMapState(state){
         this.#map.getContainer().classList[state]("hide");
@@ -418,38 +531,3 @@ class MapHandeler {
         this.#delLayerPop.setState("add");
     }
 } 
-
-class MarkerEntry {
-    #activeEntry = null;
-    #deleteEntry = null;
-    constructor(data, parent, updateSelected) {
-        this.entry = tmplList.markerEntryTemplate.cloneNode(true).querySelector(".markerEntry");
-        [...this.entry.children].forEach((child) => {
-            this[child.localName] = child;
-        });
-        this.figcaption = this.figure.querySelector(":scope > figcaption");
-
-        this.figcaption.innerHTML = data.nameMarker.value || data.nameMarker.placeholder;
-
-        
-        this.figure.addEventListener("click", this.#activeEntry = () => {
-            //data.tokenMarker
-            data.nameMarker.value = this.figcaption.innerHTML;
-            //data.spotColor
-            //data.tokenColor
-            updateSelected(this);
-        });
-
-        this.button.addEventListener("click", this.#deleteEntry = () =>
-            this.destructor());
-
-        parent.appendChild(this.entry);
-    }
-
-    destructor() {
-        this.figure.removeEventListener("click", this.#activeEntry);
-        this.button.removeEventListener("click", this.#deleteEntry);
-
-        this.entry.parentNode?.removeChild(this.entry);
-    }
-}
