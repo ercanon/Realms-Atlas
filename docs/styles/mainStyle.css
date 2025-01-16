@@ -5,9 +5,6 @@
 }
 
 :root {
-    /*Variables*/
-    --layoutSpacing: 0.6rem;
-    --searchBtnDim: 2.5rem;
     /* Palette */
     --white: white;
     --black: black;

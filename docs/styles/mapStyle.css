@@ -18,9 +18,17 @@
 
 /*>--------------- { Search Btn } ---------------<*/
 #sideColumn {
+    --layoutSpacing: 0.6rem;
+    --sideColumDim: 40px;
+    --searchBtnDim: 2.5rem;
+    position: relative;
     display: flex;
     flex-direction: column;
+    width: 40px;
     height: 100%;
+    margin: var(--layoutSpacing);
+    gap: var(--layoutSpacing);
+    z-index: 800;
 }
 
 .leaflet-control-search {
@@ -28,7 +36,7 @@
 }
 @media (max-width: 767px) {
     .leaflet-control-search {
-        margin-left: 0rem !important;
+        margin-left: 0 !important;
         border-left: none !important;
     }
         .leaflet-control-search.search-exp {
@@ -61,40 +69,229 @@
     flex: 1;
     position: relative;
     border-top: 2px solid rgba(0, 0, 0, .2);
+    width: 100%;
 }
-@media (min-width: 768px) {
-    .leaflet-sidebar {
-        max-width: 30rem;
-        margin-bottom: 20px;
+
+.leaflet-sidebar-tabs {
+    height: 100%;
+    background-color: #fff;
+}
+
+.leaflet-sidebar-tabs,
+.leaflet-sidebar-tabs > ul {
+    position: absolute;
+    width: 100%;
+    list-style-type: none;
+}
+
+.leaflet-sidebar-tabs > li,
+.leaflet-sidebar-tabs > ul > li {
+    width: 100%;
+    height: 40px;
+    color: #333;
+    font-size: 1.34rem;
+    overflow: hidden;
+    transition: all 80ms;
+}
+    .leaflet-sidebar-tabs > li:hover,
+    .leaflet-sidebar-tabs > ul > li:hover {
+        color: #000;
+        background-color: #eee;
     }
-    .leaflet-sidebar:not(.collapsed) {
-        width: 40%;
+    .leaflet-sidebar-tabs > li.active,
+    .leaflet-sidebar-tabs > ul > li.active {
+        color: #fff;
+        background-color: #0074d9;
     }
-    .leaflet-sidebar-pane {
-        min-width: 0rem;
+    .leaflet-sidebar-tabs > li.disabled,
+    .leaflet-sidebar-tabs > ul > li.disabled {
+        color: rgba(51,51,51,.4);
     }
+    .leaflet-sidebar-tabs > li.disabled:hover,
+    .leaflet-sidebar-tabs > ul > li.disabled:hover {
+        background: 0 0;
+    }
+
+    .leaflet-sidebar-tabs > li.disabled > a,
+    .leaflet-sidebar-tabs > ul > li.disabled > a {
+        cursor: default;
+    }
+
+.leaflet-sidebar-tabs > li > a,
+.leaflet-sidebar-tabs > ul > li > a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 40px;
+    color: inherit;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+}
+
+.leaflet-sidebar-tabs > ul + ul {
+    bottom: 0;
 }
 
 .leaflet-sidebar-content {
-    background-color: rgba(255,255,255,1) !important;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(255,255,255,1);
+    overflow-y: auto;
+}
+    .leaflet-sidebar-content.collapsed {
+        width: 0;
+    }
+
+@media (min-width: 800px) {
+    .leaflet-sidebar-content {
+        width: 40vw;
+        max-width: 30rem;
+        transition: width .5s;
+    }
+}
+
+.leaflet-sidebar-left .leaflet-sidebar-content {
+    left: 40px;
+    right: 0;
+}
+
+.leaflet-sidebar-right .leaflet-sidebar-content {
+    left: 0;
+    right: 40px;
 }
 
 .leaflet-sidebar-pane {
-    padding-inline: var(--layoutSpacing) !important;
+    display: none;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+    padding: var(--layoutSpacing);
 }
+
     .leaflet-sidebar-pane.active {
-        display: flex !important;
+        display: flex;
         flex-direction: column;
         height: 100%;
     }
 
+    .leaflet-sidebar-pane.collapsed {
+        width: 0;
+    }
+
 .leaflet-sidebar-header {
-    margin-bottom: var(--layoutSpacing) !important;
+    margin: -10px -20px 0;
+    margin-bottom: var(--layoutSpacing);
+    height: 40px;
+    padding: 0 20px;
+    line-height: 40px;
+    font-size: 14.4pt;
+    color: #fff;
+    background-color: #0074d9;
 }
 
-.leaflet-sidebar-tabs>ul>li {
-    font-size: 1.34rem !important;
+.leaflet-sidebar-right .leaflet-sidebar-header {
+    padding-left: 40px;
 }
+
+.leaflet-sidebar-close {
+    position: absolute;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.leaflet-sidebar-left .leaflet-sidebar-close {
+    right: 0;
+}
+
+.leaflet-sidebar-right .leaflet-sidebar-close {
+    left: 0;
+}
+
+.leaflet-sidebar {
+    box-shadow: 0 1px 5px rgba(0,0,0,.65);
+}
+
+@media (min-width:768px) {
+    .leaflet-sidebar {
+        border-radius: 4px;
+    }
+
+        .leaflet-sidebar.leaflet-touch {
+            border: 2px solid rgba(0,0,0,.2);
+        }
+}
+
+.leaflet-sidebar-left.leaflet-touch {
+    box-shadow: none;
+    border-right: 2px solid rgba(0,0,0,.2);
+}
+
+@media (min-width:768px) {
+    .leaflet-sidebar-left ~ .leaflet-control-container .leaflet-left {
+        transition: left .5s;
+    }
+}
+
+@media (min-width:768px) and (max-width:991px) {
+    .leaflet-sidebar-left ~ .leaflet-control-container .leaflet-left {
+        left: 315px;
+    }
+}
+
+@media (min-width:992px) and (max-width:1199px) {
+    .leaflet-sidebar-left ~ .leaflet-control-container .leaflet-left {
+        left: 400px;
+    }
+}
+
+@media (min-width:1200px) {
+    .leaflet-sidebar-left ~ .leaflet-control-container .leaflet-left {
+        left: 470px;
+    }
+}
+
+.leaflet-sidebar-left.collapsed ~ .leaflet-control-container .leaflet-left {
+    left: 50px;
+}
+
+.leaflet-sidebar-right.leaflet-touch {
+    box-shadow: none;
+    border-left: 2px solid rgba(0,0,0,.2);
+}
+
+@media (min-width:768px) {
+    .leaflet-sidebar-right ~ .leaflet-control-container .leaflet-right {
+        transition: right .5s;
+    }
+}
+
+@media (min-width:768px) and (max-width:991px) {
+    .leaflet-sidebar-right ~ .leaflet-control-container .leaflet-right {
+        right: 315px;
+    }
+}
+
+@media (min-width:992px) and (max-width:1199px) {
+    .leaflet-sidebar-right ~ .leaflet-control-container .leaflet-right {
+        right: 400px;
+    }
+}
+
+@media (min-width:1200px) {
+    .leaflet-sidebar-right ~ .leaflet-control-container .leaflet-right {
+        right: 470px;
+    }
+}
+
+.leaflet-sidebar-right.collapsed ~ .leaflet-control-container .leaflet-right {
+    right: 50px;
+}
+
 
 /*>---------- [ Text Panel ] ----------<*/
 .info-panel textarea {
@@ -159,7 +356,7 @@
     flex-direction: column;
     width: 100%;
     margin: calc(var(--layoutSpacing) * 1.5);
-    margin-right: 0rem;
+    margin-right: 0;
     justify-content: space-between;
 }
 #nameMarker {
