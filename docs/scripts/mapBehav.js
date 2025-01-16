@@ -167,70 +167,9 @@ const MarkerEntry = L.DivIcon.extend({
         return this.options.markerRef.cloneNode(true);
     }
 });
-const DynamicSidebar = L.Control.Sidebar.extend({
+const DynSidebar = L.Control.Sidebar.extend({
     options: {
         iconList: { }
-    },
-    onAdd: function (t) {
-        var e, i, s, o, n;
-        for ((n = (n = this._container) || (this._container || "string" == typeof this.options.container ? L.DomUtil.get(this.options.container) : this.options.container)) || (n = L.DomUtil.create("div", "leaflet-sidebar"),
-            "string" == typeof this.options.container && (n.id = this.options.container)),
-            this._paneContainer = n.querySelector("div.leaflet-sidebar-content"),
-            null === this._paneContainer && (this._paneContainer = L.DomUtil.create("div", "leaflet-sidebar-content", n)),
-            L.DomUtil.addClass(this._paneContainer, "collapsed"),
-            s = n.querySelectorAll("ul.leaflet-sidebar-tabs, div.leaflet-sidebar-tabs > ul"),
-            this._tabContainerTop = s[0] || null,
-            this._tabContainerBottom = s[1] || null,
-            null === this._tabContainerTop && ((o = L.DomUtil.create("div", "leaflet-sidebar-tabs", n)).setAttribute("role", "tablist"),
-                this._tabContainerTop = L.DomUtil.create("ul", "", o)),
-            null === this._tabContainerBottom && (o = this._tabContainerTop.parentNode,
-                this._tabContainerBottom = L.DomUtil.create("ul", "", o)),
-            e = 0; e < this._tabContainerTop.children.length; e++)
-            (i = this._tabContainerTop.children[e])._sidebar = this,
-                i._id = i.querySelector("a").hash.slice(1),
-                this._tabitems.push(i);
-        for (e = 0; e < this._tabContainerBottom.children.length; e++)
-            (i = this._tabContainerBottom.children[e])._sidebar = this,
-                i._id = i.querySelector("a").hash.slice(1),
-                this._tabitems.push(i);
-        for (e = 0; e < this._paneContainer.children.length; e++)
-            if ("DIV" === (i = this._paneContainer.children[e]).tagName && L.DomUtil.hasClass(i, "leaflet-sidebar-pane")) {
-                this._panes.push(i);
-                var a = i.querySelectorAll(".leaflet-sidebar-close");
-                a.length && (this._closeButtons.push(a[a.length - 1]),
-                    this._closeClick(a[a.length - 1], "on"))
-            }
-        for (e = 0; e < this._tabitems.length; e++)
-            this._tabClick(this._tabitems[e], "on");
-        return n
-    },
-    open: function (t) {
-        var e, i, s;
-        if (s = this._getTab(t),
-            L.DomUtil.hasClass(s, "disabled"))
-            return this;
-        for (e = 0; e < this._panes.length; e++)
-            (i = this._panes[e]).id === t ? L.DomUtil.addClass(i, "active") : L.DomUtil.hasClass(i, "active") && L.DomUtil.removeClass(i, "active");
-        for (e = 0; e < this._tabitems.length; e++)
-            (i = this._tabitems[e]).querySelector("a").hash === "#" + t ? L.DomUtil.addClass(i, "active") : L.DomUtil.hasClass(i, "active") && L.DomUtil.removeClass(i, "active");
-        return this.fire("content", {
-            id: t
-        }),
-            L.DomUtil.hasClass(this._paneContainer, "collapsed") && (this.fire("opening"),
-                L.DomUtil.removeClass(this._paneContainer, "collapsed"),
-                this.options.autopan && this._panMap("open")),
-            this
-    },
-    close: function () {
-        var t;
-        for (t = 0; t < this._tabitems.length; t++) {
-            var e = this._tabitems[t];
-            L.DomUtil.hasClass(e, "active") && L.DomUtil.removeClass(e, "active")
-        }
-        return L.DomUtil.hasClass(this._paneContainer, "collapsed") || (this.fire("closing"),
-            L.DomUtil.addClass(this._paneContainer, "collapsed"),
-            this.options.autopan && this._panMap("close")),
-            this
     },
     addPanel: function (t) {
         var e, i, s, o, n;
@@ -481,7 +420,7 @@ class MapHandeler {
 
         /*>---------- [ Sidebar Construct ] ----------<*/
         this.#fetchMapIcons("icons/index.json").then(() => {
-            this.#sidebar = new DynamicSidebar({
+            this.#sidebar = new DynSidebar({
                 position: "left",
                 closeButton: false,
                 autopan: true,
@@ -509,11 +448,11 @@ class MapHandeler {
             //Settings Panel
 
             /*>---------- [ Marker Construct ] ----------<*/
-            //this.#map.pm.addControls({
-            //    position: 'topleft',
-            //    drawCircleMarker: false,
-            //    rotateMode: false,
-            //});
+            this.#map.pm.addControls({
+                position: 'topleft',
+                drawCircleMarker: false,
+                rotateMode: false,
+            });
             if (isHost) {
                 this.#map.on("click", (e) => {
                     const { lat, lng } = e.latlng;
