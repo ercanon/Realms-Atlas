@@ -18,6 +18,8 @@
 
 /*>--------------- { Search Btn } ---------------<*/
 #sideColumn {
+    --layoutSpacing: 0.6rem;
+    --searchBtnDim: 2.5rem;
     display: flex;
     flex-direction: column;
     height: 100%;
