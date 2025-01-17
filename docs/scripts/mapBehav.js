@@ -125,7 +125,7 @@ const MarkerEntry = L.DivIcon.extend({
             console.error("Error creating Marker Entry:", error);
         }
     },
-    setToken: function (tokenMarker, tokenColor = null) {
+    setToken: function (tokenMarker, tokenColor) {
         const token = tokenMarker.querySelector("g").cloneNode(true);
         if (!token)
             throw new Error("Invalid SVG Element.");
@@ -524,8 +524,7 @@ class MapHandeler {
 
     async deleteMapLayer() {
         this.#activeLayer.remove();
-        await storeDB.delData("mapData");
-        p2p.sendData({ type: "del" });
+        dataHdl.exec2Send("delete", ["maps", "main"]);
 
         this.#setMapState("add");
         this.#delLayerPop.setState("add");
