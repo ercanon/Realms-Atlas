@@ -5,12 +5,12 @@
 
 /*>---------- [ Corner Ctrl ] ----------<*/
 .clearBtn {
-    padding: 0.5rem;
-    font-size: 0.81rem;
+    padding: .5rem;
+    font-size: .81rem;
     font-weight: bold;
     color: var(--white);
     background-color: var(--red);
-    transition: background-color 0.3s ease;
+    transition: background-color .3s ease;
 }
     .clearBtn:hover {
         background-color: var(--redHover);
@@ -18,7 +18,7 @@
 
 /*>--------------- { Search Btn } ---------------<*/
 #sideColumn {
-    --layoutSpacing: 0.6rem;
+    --layoutSpacing: .6rem;
     --searchBtnDim: 2.5rem;
     display: flex;
     flex-direction: column;
@@ -52,7 +52,7 @@
     height: var(--searchBtnDim);
     width: var(--searchBtnDim);
     background-size: 1.7rem !important;
-    background-position: center 0.35rem !important;
+    background-position: center .35rem !important;
 }
     .leaflet-control-search .search-button:hover {
         background-position-y: -1.7rem !important;
@@ -102,7 +102,7 @@
 .info-panel textarea {
     flex: 1;
     width: 100%;
-    padding: 0.62rem;
+    padding: .62rem;
     resize: none;
 }
 
@@ -111,7 +111,7 @@
     overflow-y: auto;
     word-wrap: break-word;
     text-align: justify;
-    font-size: 0.9rem;
+    font-size: .9rem;
 }
     .info-panel > div h1 {
         font-size: 1.5rem;
@@ -119,19 +119,19 @@
     }
     .info-panel > div h2 {
         font-size: 1.25rem;
-        margin-top: 0.75rem;
+        margin-top: .75rem;
     }
     .info-panel > div p {
-        margin: 0.5rem 0;
+        margin: .5rem 0;
     }
     .info-panel > div code {
         background-color: #eee;
-        padding: 0.12rem 0.25rem;
-        border-radius: 0.78rem;
+        padding: .12rem .25rem;
+        border-radius: .78rem;
     }
     .info-panel > div pre {
         background-color: #eee;
-        padding: 0.62rem;
+        padding: .62rem;
         border-radius: 5px;
         overflow-x: auto;
     }
@@ -144,7 +144,7 @@
 #customIcon {
     display: flex;
     margin-bottom: var(--layoutSpacing);
-    font-size: 0.9rem;
+    font-size: .9rem;
 }
 
 #customIcon > figure {
@@ -216,7 +216,7 @@
     width: 100%;
     display: flex;
     opacity: 0;
-    animation: fade-in 0.3s ease forwards;
+    animation: fade-in .3s ease forwards;
     margin-block: var(--layoutSpacing);
     font-size: 1.1rem;
     max-height: 4.9rem;
@@ -255,9 +255,9 @@
     width: 100%;
     font-size: 1.5rem;
     background: none;
-    border: 0.13rem dashed #4c4c4c;
+    border: .13rem dashed #4c4c4c;
     border-radius: 0px;
-    transition: border-color 0.3s ease;
+    transition: border-color .3s ease;
     margin-top: var(--layoutSpacing);
 }
     #btnEntry:hover {
@@ -265,19 +265,8 @@
     }
 #btnEntry > i {
     margin-block: var(--layoutSpacing);
-    transition: color 0.3s ease;
+    transition: color .3s ease;
 }
     #btnEntry:hover > i {
         color: var(--blue);
     }
-
-/*>--------------- { Animations } ---------------<*/
-@keyframes fade-in {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}

@@ -10,24 +10,26 @@
     height: 100%;
     background-color: #80808080;
     z-index: 900;
+    animation: fade-in .3s ease forwards;
 }
 
 /*>--------------- { Popup Content } ---------------<*/
-.bgPopup div {
+.bgPopup > div {
     text-align: center;
     padding: 2rem 1rem;
     background-color: #dcdcdc;
     border-radius: 1rem;
-    width: calc(15.6rem + 20%);
+    width: calc(15.6rem + 20vw);
+    animation: zoom-in .3s ease forwards;
 }
 
 .delLayer button {
-    padding: 0.5rem 2rem;
+    padding: .5rem 2rem;
     margin-inline: 2rem;
     margin-top: 1.5rem;
     font-size: 1rem;
     color: var(--white);
-    transition: background-color 0.3s ease;
+    transition: background-color .3s ease;
 }
 .deleteBtn {
     background-color: var(--red);
@@ -42,14 +44,3 @@
     .cancelBtn:hover {
         background-color: #666666;
     }
-
-/*>--------------- { Animations } ---------------<*/
-@keyframes zoom-in {
-    from {
-        transform: scale(0);
-    }
-
-    to {
-        transform: scale(1);
-    }
-}

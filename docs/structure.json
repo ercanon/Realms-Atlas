@@ -1,0 +1,22 @@
+{
+  //Maps (storeName)
+  "map1": { //(keyPath)
+    "data": "Uint8Array", //data
+    "md": "Mapa principal", //data
+    "entries": [ "entry1", "entry2" ] //data
+  },
+
+  //Entries (storeName)
+  "entry1": { //(keyPath)
+    "svg": "<svg>...</svg>", //data
+    "markers": [ "marker1", "marker2" ] //data
+  },
+
+  //Markers (storeName)
+  "marker1": { //(keyPath)
+    "entryID": "entry1", //data
+    "md": "Marcador en entrada X", //data
+    "map1": [ 100, 200 ], //data
+    "map2": [ 300, 400 ] //data
+  }
+}

@@ -524,8 +524,7 @@ class MapHandeler {
 
     async deleteMapLayer() {
         this.#activeLayer.remove();
-        await storeDB.delData("mapData");
-        p2p.sendData({ type: "del" });
+        dataHdl.exec2Send("delete", ["maps", "main"]);
 
         this.#setMapState("add");
         this.#delLayerPop.setState("add");
