@@ -135,7 +135,7 @@ const MarkerEntry = L.DivIcon.extend({
             console.error("Error creating Marker Entry:", error);
         }
     },
-    setToken: function (tokenMarker, tokenColor = null) {
+    setToken: function (tokenMarker, tokenColor) {
         const token = tokenMarker.querySelector("g").cloneNode(true);
         if (!token)
             throw new Error("Invalid SVG Element.");
@@ -238,7 +238,7 @@ const DynSidebar = L.Control.Sidebar.extend({
     },
 
     /*>---------- [ Sidebar Construct ] ----------<*/
-    _createPanel: function (title, tab, { closeIcon = null, closeFunct = null }) {
+    _createPanel: function (title, tab, { closeIcon, closeFunct }) {
         const id = `${title.replace(/ /g, "_")}-panel`
         return this.addPanel({
             title,
@@ -378,7 +378,7 @@ const DynSidebar = L.Control.Sidebar.extend({
 
 /*>--------------- { Map Handeler } ---------------<*/
 class MapHandeler {
-    #delLayerPop = new PopDiv("delLayer");
+    #delLayerPop = new PopupInit("delLayer");
     #map = null;
     #sidebar = null;
     #iconList = {};
@@ -445,10 +445,10 @@ class MapHandeler {
             const indexEntry = this.#sidebar.createMarkerPanel("Marker Index", `<i class="fa-solid fa-list"></i>`);
 
             //Marker Panel
-            /*this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
+            this.#sidebar.createInfoPanel("Token Information", `<i class="fa-solid fa-location-pin"></i>`, {
                 closeIcon: `<i class="fa-solid fa-xmark"></i>`,
                 closeFunct: [this.#sidebar.onCloseClick, this.#sidebar.removePanel]
-            });*/
+            });
 
             //Tools Panel
             this.#sidebar.createToolsPanel("Map Tools", `<i class="fa-solid fa-screwdriver-wrench"></i>`);

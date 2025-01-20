@@ -6,23 +6,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     //Start loading initial data
-    const loadDataPop = new PopDiv("Loading previous session data...");
+    const loadDataPop = new PopupInit("Loading previous session data...");
 
-    const p2pID = new URLSearchParams(window.location.search).get("id")
+    const p2pID = new URLSearchParams(window.location.search).get("id");
     isHost  = !p2pID;
 
-    dataHdl = await new DataHandeler();
+    dataHdl = await new DataHandeler(p2pID);
     mapHdl  = await new MapHandeler();
 
     const fileInput = document.getElementById("fileInput");
+    const shareBtn = document.getElementById("shareBtn");
     if (!isHost)
         [shareBtn, fileInput].forEach((element) => element.classList.add("hide"));
     else
     {
-        document.getElementById("shareBtn").addEventListener("click", async () => {
+        const shareURL = `${window.location.origin + window.location.pathname}?id=${dataHdl.getPeerID()}`;
+        shareBtn.addEventListener("click", async () => {
             try {
-                const shareURL = `${window.location.origin + window.location.pathname}?id=${window.p2p.getID()}`;
-
                 if (navigator.share) {
                     await navigator.share({
                         title: "URL for your Realms' Atlas Spectators",
@@ -69,7 +69,7 @@ function showError(message, error = null) {
     alert(message);
 }
 
-class PopDiv {
+class PopupInit {
     #popup = null;
     constructor(type) {
         this.#popup = tmplList.popupTemplate.cloneNode(true).querySelector(".bgPopup");
@@ -125,7 +125,7 @@ class DataHandeler {
     #dataBase = null;
     #peerID = null;
     #connect = [];
-    #popup = new PopDiv("Receiving host data...");
+    #popup = new PopupInit("Receiving host data...");
 
     constructor(hostID) {
         return (async () => {
@@ -239,17 +239,19 @@ class DataHandeler {
         conn.on("data", (income) => {
             try {
                 this.#popup.setState("add");
+
+                const incData = fflate.gunzipSync(income.data);
                 switch (income.funcExec) {
                     case "incoming":
                         this.#popup.setState("remove");
+                        this.processData(incData);
+                        break;
+                    case "put":
                         break;
                     case "delete":
                         break;
                     default:
-                        if (Array.isArray(income.type))
-                            this.delData(income.type);
-                        else
-                            throw new Error("Invalid data type received.");
+                        throw new Error("Invalid data type received.");
                 }
             }
             catch (error) {
@@ -265,7 +267,7 @@ class DataHandeler {
             peer.send(compData);
         });
     }
-    getID() {
+    getPeerID() {
         return this.#peerID;
     }
 }
