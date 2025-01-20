@@ -48,6 +48,16 @@ const CanvasLayer = L.GridLayer.extend({
         return [tileX, tileY, tileRes, tileRes, 0, 0, tileRes, tileRes];
     }
 });
+/**
+ * Entry
+ *  - figure
+ *      - marker
+ *          - spot
+ *          - token
+ *      - figcaption
+ *  - checkbox
+ *  - button
+ */
 const MarkerEntry = L.DivIcon.extend({
     options: {
         defaultName: null,
@@ -57,7 +67,7 @@ const MarkerEntry = L.DivIcon.extend({
     /**
      * this.figure;
      * this.figcaption;
-     * this.icon;
+     * this.marker;
      * this.spotColor;
      * this.tokenColor;
      */
@@ -70,20 +80,20 @@ const MarkerEntry = L.DivIcon.extend({
             this.figure = entry.querySelector(":scope > figure");
             this.figure.innerHTML = spotMarker;
 
-            this.icon = this.figure.querySelector(":scope > svg");
-            if (!this.icon) 
+            this.marker = this.figure.querySelector(":scope > svg");
+            if (!this.marker) 
                 throw new Error("Invalid SVG Element.");
 
             //Set color to Spot
-            this.icon.removeAttribute("style");
-            this.spotColor = this.icon.querySelector("path");
+            this.marker.removeAttribute("style");
+            this.spotColor = this.marker.querySelector("path");
             this.setColor("spotColor", spotColor.value);
 
             //Create Token
             this.setToken(tokenMarker, tokenColor.value);
 
             //Create referenced Icon
-            this.options.markerRef = this.icon.cloneNode(false);
+            this.options.markerRef = this.marker.cloneNode(false);
             Object.assign(this.options.markerRef.style, {
                 width: "3rem",
                 height: "3rem",
@@ -150,7 +160,7 @@ const MarkerEntry = L.DivIcon.extend({
             if (color)
                 this.setColor("tokenColor", color);
 
-            this.icon.appendChild(token);
+            this.marker.appendChild(token);
         }
     },
     setName: function (inputName) {
@@ -158,7 +168,7 @@ const MarkerEntry = L.DivIcon.extend({
         const name = inputName || defaultName || "Spot Marker";
 
         this.figcaption.textContent = name;   
-        markerPathRef.setAttribute("href", `#${this.icon.id = name.replace(/ /g, "_")}`);
+        markerPathRef.setAttribute("href", `#${this.marker.id = name.replace(/ /g, "_")}`);
     },
     setColor: function (type, color) {
         this[type]?.setAttribute("fill", color);
@@ -524,7 +534,7 @@ class MapHandeler {
 
     async deleteMapLayer() {
         this.#activeLayer.remove();
-        dataHdl.exec2Send("delete", ["maps", "main"]);
+        dataHdl.exec2Send("delete", ["maps", "main", "buffer"]);
 
         this.#setMapState("add");
         this.#delLayerPop.setState("add");

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const arrayBuffer = await file.arrayBuffer();               
-                dataHdl.exec2Send("put", ["maps", "main"], arrayBuffer);
+                dataHdl.exec2Send("put", ["maps", "main", "buffer"], arrayBuffer);
                 mapHdl.loadMapImg(URL.createObjectURL(new Blob([arrayBuffer], { type: "image/webp" })));
             }
             catch (error) {
@@ -133,10 +133,28 @@ class DataHandeler {
                 this.#popup.setState("add");
 
             //Create Database and load previous data
-            await this.#createObjectStore();
-            [...this.#dataBase.objectStoreNames].map(async (storeName) => {
-                const allData = await this.execData("getAll", [storeName]);
-                this.processData(allData);
+            await new Promise((resolve, reject) => {
+                const request = indexedDB.open("atlasDB");
+
+                request.onupgradeneeded = (event) => {
+                    const dataBase = event.target.result;
+                    ["maps", "entries", "markers"].forEach((storeName) => {
+                        if (!dataBase.objectStoreNames.contains(storeName))
+                            dataBase.createObjectStore(storeName);
+                    });
+                };
+
+                request.onsuccess = (event) => {
+                    this.#dataBase = event.target.result;
+                    resolve();
+                };
+                request.onerror = (event) => reject(event.target.error);
+            });
+            [...this.#dataBase.objectStoreNames].map((storeName) => {
+                this.#execData("getAll", [storeName]).then((allData) => {
+                    allData.forEach((pathData) =>
+                        this.processData(storeName, pathData));
+                });
             });
 
             //Create P2P connection
@@ -153,7 +171,7 @@ class DataHandeler {
                 this.#setupConnection(conn);
 
                 conn.on("open", async () => {
-                    this.sendData({ type: "init", data: await dataHdl.getData("maps", "main") });
+                    //this.sendData({ type: "init", data: await dataHdl.getData("maps", "main") });
                 });
             });
 
@@ -167,78 +185,50 @@ class DataHandeler {
             case "put":
                 this.saveData(storePath, data);
                 break;
+            case "delete":
+                this.#execData("delete", storePath);
+                break;
         }
         this.sendData({ type: funcExec, data });
     }
 
     /*>---------- [ Database ] ----------<*/
-    async #createObjectStore(storeName) {
-        return new Promise((resolve, reject) => {
-            this.#dataBase?.close();
-            const request = indexedDB.open("atlasDB", this.#dataBase?.version + 1 || undefined);
-
-            request.onupgradeneeded = (event) => {
-                const dataBase = event.target.result;
-                const initObjectStore = (storeName) => {
-                    if (!dataBase.objectStoreNames.contains(storeName))
-                        dataBase.createObjectStore(storeName, { keyPath: "pathID" });
-                };
-
-                if (!storeName)
-                    ["Maps", "Entries", "Markers"].forEach(initObjectStore);
-                else
-                    initObjectStore(storeName)
-            };
-
-            request.onsuccess = (event) => {
-                this.#dataBase = event.target.result;
-                resolve();
-            };
-            request.onerror = (event) => reject(event.target.error);
-        });
-    }
-
-    async saveData([storeName, pathID], data) {
+    async saveData([storeName, pathID, objNode], data) {
         if (!data)
-            throw new Error("Trying to save empty data."));
+            throw new Error("Trying to save empty data.");
 
-        const storedData = await this.#execData("get", storeName, pathID);
-        if (typeof storedData === 'object' && typeof data === 'object')
-            data = { ...storedData, ...data };
+        const storedData = await this.#execData("get", [storeName, pathID]) || {};
+        const arrayData = storedData[objNode];
+        if (Array.isArray(arrayData) && Array.isArray(data))
+            data = [...arrayData, ...data];
+        else if (typeof storedData === 'object' && typeof data === 'object')
+            data = { ...storedData, [objNode]: data };
         else
             throw new Error("Data type do not match to previous data.");
 
-        this.#execData((store) => store.put(data, pathID), storeName  );
+        this.#execData("put", [storeName, data], pathID); //pathID and Data must be switched for "put" to work
     }
 
-    async #execData(funcExec, storeName) {
-        if (!this.#dataBase.objectStoreNames.contains(storeName))         
-            throw new Error("Store database do not exist.");       
-
-        return new Promise((resolve, reject) => {
+    async #execData(funcExec, [storeName, pathID], data) {
+        return new Promise((resolve, reject) => {            
             const transaction = this.#dataBase.transaction(storeName, "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = funcExec(store);
+            const request = transaction.objectStore(storeName)[funcExec](pathID, data);
 
-            request.onsuccess = (event) => resolve(event.target.result?.data || null);
+            request.onsuccess = (event) => resolve(event.target.result || null);
             request.onerror = (event) => reject(event.target.error);
         });
     }
-    //if(storedData) {
-    //    if (typeof storedData === 'object' && typeof data === 'object') {
-    //        for (const key in data) {
-    //            if (Array.isArray(storedData[key]) && Array.isArray(data[key])) {
-    //                storedData[key] = [...new Set([...storedData[key], ...data[key]])];
-    //            } else {
-    //                storedData[key] = data[key];
-    //            }
-    //        }
-    //    } else {
-    //        return reject(new Error("Data type do not match to previous data."));
-    //    }
-    //}
-    async processData() {
 
+    async processData(storeName, data) {
+        switch (storeName) {
+            case "maps":
+                mapHdl.loadMapImg(URL.createObjectURL(new Blob([data?.buffer], { type: "image/webp" })));
+                break;
+            case "entries":
+                break;
+            case "markers":
+                break;
+        }
     }
 
     /*>---------- [ P2P Connection ] ----------<*/
