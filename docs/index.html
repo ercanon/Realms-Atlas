@@ -1,19 +1,32 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Realms' Atlas</title>
-    <link rel="stylesheet" href="style.css">
+
+    <!--Style-->
+    <link rel="stylesheet" href="styles/mainStyle.css">
+
+    <!--Scripts-->
+    <script src="scripts/eventUtils.js"></script>
 </head>
 <body>
     <header>
-        <div class="header-content">
-            <h1>Realms' Atlas</h1>
-            <button id="shareBtn">Compartir enlace</button>
+        <h1>Realms' Atlas</h1>
+        <div>
+            <button id="shareBtn">Spectator URL</button>
+            <button id="dnldDatabase">
+                <i class="fa-solid fa-file-arrow-down"></i>
+            </button>
         </div>
     </header>
 
-    <script src="script.js"></script>
+    <main>
+        <g id="fileInput">
+            <h2>Introduce una imagen o un enlace</h2>
+            <input type="file" accept="image/*" /> <br>
+        </g>
+    </main>
 </body>
 </html>
