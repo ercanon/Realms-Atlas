@@ -1,0 +1,38 @@
+# Node.js dependencies
+node_modules
+
+# Build o carpetas de distribución
+dist
+build
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración del editor (ejemplo VSCode)
+.vscode
+.idea
+.code-workspace
+.vs
+
+# Logs
+.log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Cache de navegadores o herramientas
+.cache
+.cache
+
+# Archivos temporales de SASSSCSS
+.sass-cache
+
+# Archivos de paquetes (zip, tar, etc.)
+.zip
+.tar
+.tar.gz
+
+# Configuración personal local (opcional)
+.env
+.env.local
