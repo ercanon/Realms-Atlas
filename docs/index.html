@@ -3,30 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Realms' Atlas</title>
+    <title>Realms' Atlas - Interactive Map Editor</title>
+
+    <!--Fonts-->
+    <!--Style Lib-->
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon/dist/iconify-icon.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css" rel="stylesheet" >
+
+    <!--Lib-->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.js"></script>
 
     <!--Style-->
-    <link rel="stylesheet" href="styles/mainStyle.css">
+    <link href="styles/index.css" type="text/css" rel="stylesheet">
+    <link href="styles/mapObj.css" type="text/css" rel="stylesheet">
 
     <!--Scripts-->
-    <script src="scripts/eventUtils.js"></script>
+    <script src="scripts/indexUtils.js" type="text/javascript" charset="utf-8"></script>
+    <script src="scripts/mapObj.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
+    <!--Popup Structure-->
+    <template id="contPopupTmpl">
+        <span class="delMapPopup">
+            <button>Delete</button>
+            <button>Cancel</button>
+        </span>
+        <span class="urlPopupTmpl">
+        </span>
+    </template>
+
+    <!--Popup Structure-->
+    <div id="bgPopup" class="hide"></div>
+
+    <!--Banner-->
     <header>
         <h1>Realms' Atlas</h1>
-        <div>
-            <button id="shareBtn">Spectator URL</button>
-            <button id="dnldDatabase">
-                <i class="fa-solid fa-file-arrow-down"></i>
-            </button>
-        </div>
+        <span>
+            <button>Spectator URL</button>
+            <iconify-icon icon="material-symbols:sim-card-download" noobserver></iconify-icon>
+        </span>
     </header>
 
+    <!--Web Contents-->
     <main>
-        <g id="fileInput">
+        <div>
             <h2>Introduce una imagen o un enlace</h2>
-            <input type="file" accept="image/*" /> <br>
-        </g>
+            <input type="file" accept="image/*" />
+        </div>
     </main>
 </body>
 </html>

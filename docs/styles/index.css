@@ -1,0 +1,146 @@
+:root {
+	/* Variables */
+	--spaceLyt: 10px;
+	--tightSpaceLyt: calc(var(--spaceLyt) / 2);
+
+	/* Palette */
+	--black:	black;
+	--white:	white;
+	--whiteHvr:	rgb(220, 220, 220);
+	--grey:		rgb(50,  50,  50);
+	--red:		rgb(211, 47,  47);
+	--redHvr:	rgb(183, 28,  28);
+	--blue:		rgb(0,	 116, 217);
+	--blueHvr:	rgb(170, 170, 170);
+	--green:	rgb(76,  175, 80);
+	--greenHvr: rgb(54,  127, 58);
+	--gold:		rgb(247, 187, 75);
+	--goldHvr:	rgb(180, 130, 50);
+}
+
+button {
+	border: none;
+	border-radius: var(--tightSpaceLyt);
+	cursor: pointer;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+}
+
+
+
+/*>--------------- { Popup } ---------------<*/
+#bgPopup {
+	position: absolute;
+	z-index: 1000;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100vw;
+	height: 100vh;
+	background-color: rgb(65, 65, 65, 0.65);
+	animation: fade-in .3s ease forwards;
+}
+
+#bgPopup div {
+	position: absolute;
+	text-align: center;
+	padding: calc(var(--spaceLyt) * 3);
+	background-color: var(--whiteHvr);
+	border-radius: var(--spaceLyt);
+	animation: zoom-in .3s ease forwards;
+}
+
+
+
+/*>--------------- { Banner } ---------------<*/
+header {
+	display: flex;
+	padding: var(--tightSpaceLyt) var(--spaceLyt);
+	justify-content: space-between;
+	background-color: var(--grey);
+}
+
+header > h1 {
+	color: var(--white);
+}
+
+header > span {
+	flex: 1;
+	display: flex;
+	justify-content: flex-end;
+}
+
+header button {
+	margin: var(--tightSpaceLyt);
+	padding-inline: var(--spaceLyt);
+	color: var(--white);
+	background-color: var(--green);
+	transition: background-color .3s ease;
+}
+	header button:hover {
+		background-color: var(--greenHover);
+	}
+
+header iconify-icon {
+	margin: var(--tightSpaceLyt);
+	cursor: pointer;
+	font-size: 1.65rem;
+	color: var(--gold);
+	transition: color .3s ease;
+}
+	header iconify-icon:hover {
+		color: var(--goldHover);
+	}
+
+
+
+/*>--------------- { Main } ---------------<*/
+main {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	margin: var(--spaceLyt);
+	gap: var(--spaceLyt);
+}
+
+
+
+/*>--------------- { Dinamic Class } ---------------<*/
+.hide {
+	display: none !important;
+}
+
+
+
+/*>--------------- { Animations } ---------------<*/
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes zoom-in {
+	from {
+		transform: scale(0);
+	}
+
+	to {
+		transform: scale(1);
+	}
+}
