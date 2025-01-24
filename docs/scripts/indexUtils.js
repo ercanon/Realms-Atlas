@@ -1,5 +1,7 @@
 /*>--------------- { Web Initialization } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
+    PopupHandler.initialize();
+
     //Start loading initial data
     const initDataPop = new PopupHandler("Loading previous session data...", true);
 
@@ -45,9 +47,9 @@ function showError(message, error) {
     alert(message);
 }
 
-function setList(entries) {
-    return Object.fromEntries(entries.map(
-        (value) => [value, document.getElementById(value)]));
+function setList(entries, key) {
+    return Object.fromEntries([...entries].map(
+        (value) => [value[key], value]));
 }
 
 class PopupHandler {
@@ -55,13 +57,6 @@ class PopupHandler {
     static #tmplPopup = null;
     #popup = null;
     constructor(type, isVis) {
-        if (!PopupHandler.#bgPopup) {
-                PopupHandler.#bgPopup = document.getElementById("bgPopup");
-                PopupHandler.#tmplPopup = Object.fromEntries(
-                    [...document.getElementById("contPopupTmpl").content.children].map(
-                    (template) => [template.className, template]));
-        }
-
         this.#popup = document.createElement("div");
         this.#popup.classList.add("hide");
         PopupHandler.#bgPopup.appendChild(this.#popup);
@@ -73,9 +68,13 @@ class PopupHandler {
                 this.#fillTitle("Are you sure you want to delete this layer?");
                 this.#popup.appendChild(PopupHandler.#tmplPopup.delMapPopup.cloneNode(true));
 
-                this.#popup.querySelector(`button:contains("Delete")`).addEventListener("click", () =>
-                    mapHdl.deleteMapLayer());
-                this.#popup.querySelector(`button:contains("Cancel")`).addEventListener("click", () =>
+                const { Delete, Cancel } = setList(this.#popup.querySelectorAll("button"), "innerText");
+
+                Delete.addEventListener("click", () => {
+                    mapHdl.deleteMapLayer()
+                    this.hide();
+                });
+                Cancel.addEventListener("click", () =>
                     this.hide());
                 break;
             case "urlPopupTmpl":
@@ -86,21 +85,24 @@ class PopupHandler {
                 this.#fillTitle(type);
         }
     }
+    static initialize() {
+        PopupHandler.#bgPopup = document.getElementById("bgPopup");
+        PopupHandler.#tmplPopup = setList(document.getElementById("contPopupTmpl").content.children, "className")
+    }
     #fillTitle(title) {
         this.#popup.innerHTML = `<h2>${title}</h2>`;
     }
 
     hide() {
         this.#popup.classList.add("hide");
-        if ([...PopupHandler.#bgPopup.children].every(
-            (child) => child.classList.contains("hide")))
+        if ([...PopupHandler.#bgPopup.children].every((child) =>
+            child.classList.contains("hide")))
             PopupHandler.#bgPopup.classList.add("hide");
     }
     reveal() {
         this.#popup.classList.remove("hide");
         PopupHandler.#bgPopup.classList.remove("hide");
     }
-
     delete() {
         this.hide();
         this.#popup.remove();

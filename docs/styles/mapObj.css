@@ -1,3 +1,17 @@
+/*>--------------- { DeleteBtn } ---------------<*/
+.delMap {
+    padding: var(--tightSpaceLyt);
+    font-size: .81rem;
+    font-weight: bold;
+    color: var(--white);
+    background-color: var(--red);
+    transition: background-color .3s ease;
+}
+    .delMap:hover {
+        background-color: var(--redHvr);
+    }
+
+/*>--------------- { SideBar } ---------------<*/
 .leaflet-sidebar {
     position: absolute;
     top: 0;
@@ -156,7 +170,7 @@
     overflow-y: hidden
 }
 
-.leaflet-sidebar-pane {
+.leaflet-sidebar-panel {
     display: none;
     left: 0;
     right: 0;
@@ -164,24 +178,24 @@
     padding: 10px 20px
 }
 
-    .leaflet-sidebar-pane.active {
+    .leaflet-sidebar-panel.active {
         display: block
     }
 
 @media (min-width:768px) and (max-width:991px) {
-    .leaflet-sidebar-pane {
+    .leaflet-sidebar-panel {
         min-width: 265px
     }
 }
 
 @media (min-width:992px) and (max-width:1199px) {
-    .leaflet-sidebar-pane {
+    .leaflet-sidebar-panel {
         min-width: 350px
     }
 }
 
 @media (min-width:1200px) {
-    .leaflet-sidebar-pane {
+    .leaflet-sidebar-panel {
         min-width: 420px
     }
 }

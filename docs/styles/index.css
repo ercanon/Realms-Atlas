@@ -2,14 +2,16 @@
 	/* Variables */
 	--spaceLyt: 10px;
 	--tightSpaceLyt: calc(var(--spaceLyt) / 2);
+	--looseSpaceLyt: calc(var(--spaceLyt) * 3);
 
 	/* Palette */
-	--black:	black;
+	--black:	rgb(50,  50,  50);
 	--white:	white;
 	--whiteHvr:	rgb(220, 220, 220);
-	--grey:		rgb(50,  50,  50);
+	--grey:		rgb(128, 128, 128);
+	--greyHvr:	rgb(100, 100, 100);
 	--red:		rgb(211, 47,  47);
-	--redHvr:	rgb(183, 28,  28);
+	--redHvr:	rgb(169, 25,  25);
 	--blue:		rgb(0,	 116, 217);
 	--blueHvr:	rgb(170, 170, 170);
 	--green:	rgb(76,  175, 80);
@@ -54,11 +56,34 @@ body {
 #bgPopup div {
 	position: absolute;
 	text-align: center;
-	padding: calc(var(--spaceLyt) * 3);
+	padding: var(--looseSpaceLyt);
 	background-color: var(--whiteHvr);
 	border-radius: var(--spaceLyt);
 	animation: zoom-in .3s ease forwards;
 }
+
+.delMapPopup button {
+	padding: var(--spaceLyt) var(--looseSpaceLyt);
+	margin: var(--looseSpaceLyt);
+	margin-bottom: 0;
+	font-size: 1rem;
+	color: var(--white);
+	transition: background-color .3s ease;
+}
+
+.delMapPopup button:nth-child(1) {
+	background-color: var(--red);
+}
+	.delMapPopup button:nth-child(1):hover {
+		background-color: var(--redHvr);
+	}
+
+.delMapPopup button:nth-child(2) {
+	background-color: var(--grey);
+}
+	.delMapPopup button:nth-child(2):hover {
+		background-color: var(--greyHvr);
+	}
 
 
 
@@ -68,7 +93,7 @@ header {
 	z-index: 1000;
 	padding: var(--tightSpaceLyt) var(--spaceLyt);
 	justify-content: space-between;
-	background-color: var(--grey);
+	background-color: var(--black);
 }
 
 header > h1 {
@@ -89,7 +114,7 @@ header button {
 	transition: background-color .3s ease;
 }
 	header button:hover {
-		background-color: var(--greenHover);
+		background-color: var(--greenHvr);
 	}
 
 header iconify-icon {
@@ -100,7 +125,7 @@ header iconify-icon {
 	transition: color .3s ease;
 }
 	header iconify-icon:hover {
-		color: var(--goldHover);
+		color: var(--goldHvr);
 	}
 
 

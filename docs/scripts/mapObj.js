@@ -2,52 +2,40 @@ L.Atlas = L.Map.extend({
     options: {
         zoomControl: false,
         attributionControl: false,
-        controls: []
     },
     initialize: function (id, options) {
         this._mapLayers = {};
 
         L.Map.prototype.initialize.call(this, id, options);
-
-        this.options.controls.forEach((control) => this.addControl(control));
     }
 });
 L.Control.Sidebar = L.Control.extend({
     includes: L.Evented.prototype || L.Mixin.Events,
     options: {
-        autopan: false,
-        closeButton: true,
         container: null,
+        autopan: false,
+        defaultBtn: true,
         position: "left"
     },
-    initialize: function (t, e) {
-        if (typeof t === "string") {
-            console.warn("This syntax is deprecated. Please use L.control.sidebar({ container }) now.");
-            t = { container: t };
-        }
-        if (typeof t === "object" && t.id) {
-            console.warn("This syntax is deprecated. Please use L.control.sidebar({ container }) now.");
-            t.container = t.id;
-        }
-        this._tabitems = [];
-        this._panes = [];
-        this._closeButtons = [];
-        L.setOptions(this, t);
-        L.setOptions(this, e);
+
+    initialize: function (options) {
+        this._tabs = [];
+        this._panels = [];
+        this._bannerBtns = [];
+        L.setOptions(this, options);
         return this;
     },
-    onAdd: function (map) {
+    onAdd: function () {
         let container = this._container ||
             (typeof this.options.container === "string" ? L.DomUtil.get(this.options.container) : this.options.container);
 
         if (!container) {
             container = L.DomUtil.create("div", "leaflet-sidebar collapsed");
-            if (typeof this.options.container === "string") {
+            if (typeof this.options.container === "string") 
                 container.id = this.options.container;
-            }
         }
 
-        this._paneContainer = container.querySelector("div.leaflet-sidebar-content") ||
+        this._panelContainer = container.querySelector("div.leaflet-sidebar-content") ||
             L.DomUtil.create("div", "leaflet-sidebar-content", container);
 
         const tabContainers = container.querySelectorAll("ul.leaflet-sidebar-tabs, div.leaflet-sidebar-tabs > ul");
@@ -67,190 +55,287 @@ L.Control.Sidebar = L.Control.extend({
         [...this._tabContainerTop.children].forEach((tab) => {
             tab._sidebar = this;
             tab._id = tab.querySelector("a").hash.slice(1);
-            this._tabitems.push(tab);
+            this._tabs.push(tab);
         });
 
         [...this._tabContainerBottom.children].forEach((tab) => {
             tab._sidebar = this;
             tab._id = tab.querySelector("a").hash.slice(1);
-            this._tabitems.push(tab);
+            this._tabs.push(tab);
         });
 
-        [...this._paneContainer.children].forEach((pane) => {
-            if (pane.tagName === "DIV" && L.DomUtil.hasClass(pane, "leaflet-sidebar-pane")) {
-                this._panes.push(pane);
-                const closeButtons = pane.querySelectorAll(".leaflet-sidebar-close");
-                if (closeButtons.length) {
-                    const closeButton = closeButtons[closeButtons.length - 1];
-                    this._closeButtons.push(closeButton);
-                    this._closeClick(closeButton, "on");
+        [...this._panelContainer.children].forEach((panel) => {
+            if (panel.tagName === "div" && L.DomUtil.hasClass(panel, "leaflet-sidebar-panel")) {
+                this._panels.push(panel);
+                const bannerBtns = panel.querySelectorAll(".leaflet-sidebar-close");
+                if (bannerBtns.length) {
+                    const btn = Array.from(bannerBtns.at(-1));
+                    btn._id = panel.id;
+                    this._bannerBtns.push(btn);
+                    this._closeClick(btn, "on");
                 }
             }
         });
 
-        this._tabitems.forEach((tab) => this._tabClick(tab, "on"));
+        this._tabs.forEach((tab) => this._tabClick(tab, "on"));
         return container;
     },
     onRemove: function () {
-        this._tabitems.forEach((tab) => this._tabClick(tab, "off"));
-        this._closeButtons.forEach((button) => this._closeClick(button, "off"));
+        this._tabs.forEach((tab) =>
+            this._tabClick(tab, "off"));
+        this._bannerBtns.forEach((button) =>
+            this._closeClick(button, "off"));
 
-        this._tabitems = [];
-        this._panes = [];
-        this._closeButtons = [];
+        this._tabs = [];
+        this._panels = [];
+        this._bannerBtns = [];
         return this;
     },
     addTo: function (map) {
         this.onRemove();
         this._map = map;
-        this._container = this.onAdd(map);
+        this._container = this.onAdd();
+        const pos = this.getPosition();
 
         L.DomUtil.addClass(this._container, "leaflet-control");
-        L.DomUtil.addClass(this._container, `leaflet-sidebar-${this.getPosition()}`);
-        if (L.Browser.touch) {
+        L.DomUtil.addClass(this._container, `leaflet-sidebar-${pos}`);
+        if (L.Browser.touch)
             L.DomUtil.addClass(this._container, "leaflet-touch");
-        }
 
         L.DomEvent.disableScrollPropagation(this._container);
         L.DomEvent.disableClickPropagation(this._container);
         L.DomEvent.on(this._container, "contextmenu", L.DomEvent.stopPropagation);
 
-        map._container.insertBefore(this._container, map._container.firstChild);
+        const sideControl = document.createElement("div");
+        sideControl.className = `leaflet-${pos}`;
+        Object.entries(map._controlCorners).forEach(([corner, control]) => {
+            if (corner.includes(pos)) {
+                delete map._controlCorners[corner];
+                control.remove();
+            }
+        });
+        map._controlCorners[pos] = sideControl;
+        map._controlContainer.appendChild(sideControl);
+
+        sideControl.appendChild(this._container);
         return this;
     },
-    remove: function () {
-        if (this._map) {
-            this._map._container.removeChild(this._container);
+    remove: function (id) {
+        if (id)
+            this.removePanel(id);
+        else {
+            this._map?._container.removeChild(this._container);
+            this.onRemove();
+            this._map = null;
         }
-        this.onRemove();
-        this._map = null;
+
         return this;
     },
     open: function (id) {
-        const tab = this._getTab(id);
-        if (L.DomUtil.hasClass(tab, "disabled")) return this;
+        const tab = this._getElement(id, this._tabs);
+        if (L.DomUtil.hasClass(tab, "disabled"))
+            return this;
 
-        this._panes.forEach((pane) => {
-            if (pane.id === id) {
-                L.DomUtil.addClass(pane, "active");
-            } else {
-                L.DomUtil.removeClass(pane, "active");
-            }
+        this._panels.forEach((panel) => {
+            if (panel.id === id)
+                L.DomUtil.addClass(panel, "active");
+            else 
+                L.DomUtil.removeClass(panel, "active");
         });
 
-        this._tabitems.forEach((item) => {
+        this._tabs.forEach((item) => {
             const link = item.querySelector("a");
-            if (link.hash === `#${id}`) {
+            if (link.hash === `#${id}`) 
                 L.DomUtil.addClass(item, "active");
-            } else {
+            else 
                 L.DomUtil.removeClass(item, "active");
-            }
         });
 
         if (L.DomUtil.hasClass(this._container, "collapsed")) {
             this.fire("opening");
             L.DomUtil.removeClass(this._container, "collapsed");
-            if (this.options.autopan) this._panMap("open");
+            if (this.options.autopan)
+                this._panMap("open");
         }
 
         this.fire("content", { id });
         return this;
     },
-    close: function () {
-        this._tabitems.forEach((item) => L.DomUtil.removeClass(item, "active"));
+    close: function (id) {
+        const tab = this._getElement(id, this._tabs);
+        if (tab)
+            L.DomUtil.removeClass(tab, "active");
 
         if (!L.DomUtil.hasClass(this._container, "collapsed")) {
             this.fire("closing");
             L.DomUtil.addClass(this._container, "collapsed");
-            if (this.options.autopan) this._panMap("close");
+            if (this.options.autopan)
+                this._panMap("close");
         }
 
         return this;
     },
+
+    addPanel: function ({ id, title, tabIcon, iconBtn, actionBtn, disabled, panel, position = "top" }) {
+        id = id || `${title?.replace(/ /g, "_")}-panel`
+        if (this._getElement(id, this._tabs))
+            throw new Error(`Panel con ID "${id}" ya existe.`);
+
+        const tabItem = L.DomUtil.create("li", disabled ? "disabled" : "", position === "top" ? this._tabContainerTop : this._tabContainerBottom);
+        tabItem.innerHTML = `<a href="#${id}" role="tab">${tabIcon}</a>`;
+        tabItem._id = id;
+        tabItem._sidebar = this;
+        if (title && title[0] !== "<")
+            tabItem.title = title;
+
+        this._tabClick(tabItem, "on");
+        this._tabs.push(tabItem);
+
+        if (!(panel instanceof HTMLElement))
+            panel = L.DomUtil.create("div", "leaflet-sidebar-panel", this._panelContainer);
+        if (title) {
+            iconBtn = iconBtn || this.options.defaultBtn;
+            let banner = "";
+            if (typeof iconBtn === "string")
+                banner = `<span class="leaflet-sidebar-close">${iconBtn}</span>`;
+            if (title)
+                banner = `<h1 class="leaflet-sidebar-header">${title + banner}</h1>`;
+
+            panel.insertAdjacentHTML("afterbegin", banner);
+        }
+
+        this._panelContainer.appendChild(panel);
+        panel.id = id;
+        this._panels.push(panel);
+
+        const bannerBtns = Array.from(panel.querySelectorAll(".leaflet-sidebar-close"));
+        if (bannerBtns.length) {
+            const btn = bannerBtns.at(-1);
+            btn._id = id;
+            const dataBtn = { btn, actions: actionBtn };
+            this._bannerBtns.push(dataBtn);
+            this._closeClick(dataBtn, "on", actionBtn);
+        }
+
+        return panel;
+    },
+    removePanel: function (id) {
+        const tab = this._getElement(id, this._tabs);
+        if (tab) {
+            id = tab._id;
+            L.DomEvent.off(tab.querySelector("a"), "click", this.onTabClick, tab);
+            tab.remove();
+            delete this._tabs[id];
+        }
+
+        const panel = this._getElement(id, this._panels);
+        if (panel) {
+            panel.remove();
+            delete this._panels[id];
+        }
+
+        return this;
+    },
+    enablePanel: function (id) {
+        const tab = this._getElement(id, this._tabs);
+        L.DomUtil.removeClass(tab, "disabled");
+        return this;
+    },
+    disablePanel: function (id) {
+        const tab = this._getElement(id, this._tabs);
+        L.DomUtil.addClass(tab, "disabled");
+        return this;
+    },
+    //changeIdPanel: function (newId) {
+
+    //},
+    onTabClick: function (event) {
+        const tabId = event.currentTarget.hash.slice(1);
+        if (L.DomUtil.hasClass(this, "active"))
+            this._sidebar.close(tabId);
+        else if (!L.DomUtil.hasClass(this, "disabled"))
+            this._sidebar.open(tabId);
+    },
     _tabClick: function (tab, action) {
         const link = tab.querySelector("a");
-        if (link.hasAttribute("href") && link.getAttribute("href")[0] === "#") {
-            if (action === "on") {
-                L.DomEvent.on(link, "click", L.DomEvent.preventDefault, tab)
-                    .on(link, "click", this.onTabClick, tab);
-            } else {
-                L.DomEvent.off(link, "click", this.onTabClick, tab);
-            }
-        }
+        if (link.hasAttribute("href") && link.getAttribute("href")[0] === "#")
+            L.DomEvent[action](link, "click", L.DomEvent.preventDefault, tab)
+                      [action](link, "click", this.onTabClick, tab);
     },
-    _getTab: function (id) {
-        const tab = this._tabitems.find((item) => item._id === id);
-        if (!tab) throw new Error(`Tab "${id}" not found`);
-        return tab;
+    _closeClick: function ({ btn, actions = [this.close] }, action) {
+        if (Array.isArray(actions) && actions.length)
+            actions.forEach((f) => L.DomEvent[action](btn, "click", f, this));
+    },
+    _getElement: function (id, list) {
+        if (id instanceof HTMLElement)
+            id = id.id;
+        else if (id instanceof PointerEvent)
+            id = id.currentTarget._id;
+
+        return list.find((item) => item._id === id);
     },
     _panMap: function (action) {
         const offset = parseInt(L.DomUtil.getStyle(this._container, "max-width"), 10) / 2;
         const panOffset = action === "open" && this.options.position === "left" || action === "close" && this.options.position === "right" ? offset : -offset;
         this._map.panBy([panOffset, 0], { duration: 0.5 });
-    },
-    onTabClick: function (event) {
-        const link = event.currentTarget;
-        const tabId = link.hash.slice(1);
-        const tab = this._getTab(tabId);
-        if (L.DomUtil.hasClass(tab, "active")) {
-            this.close();
-        } else if (!L.DomUtil.hasClass(tab, "disabled")) {
-            this.open(tabId);
-        }
-    },
-    _closeClick: function (button, action) {
-        if (action === "on") {
-            L.DomEvent.on(button, "click", this.close, this);
-        } else {
-            L.DomEvent.off(button, "click", this.close);
-        }
     }
 })
-
 L.Control.MapBtn = L.Control.extend({
     options: {
-        classList: null,
+        className: null,
         innerMsg: null,
-        funcExec: null
+        action: null
     },
     onAdd: function () {
-        const { classList, innerMsg, funcExec } = this.options;
-        const button = L.DomUtil.create("button", classList );
+        const { className, innerMsg, action } = this.options;
+        const button = L.DomUtil.create("button", className );
         button.innerHTML = innerMsg;
-        button.onclick = funcExec;
+        button.onclick = action;
         return button;
     }
 });
+
+
+
 class MapHandeler {
-    static #map = null;
+    static #atlas = null;
     constructor() {
-        /*>---------- [ Map Initialization ] ----------<*/
         const main = document.getElementsByTagName("main")[0];
-        MapHandeler.#map = new L.Atlas(
+        /*>---------- [ Map Initialization ] ----------<*/
+        MapHandeler.#atlas = new L.Atlas(
             main.appendChild(document.createElement("span")), {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
             maxBoundsViscosity: 1.0,
-            controls: [
-                new L.Control.Sidebar({
-                    position: "left",
-                    closeButton: false,
-                    autopan: true
-                }),
-                new L.Control.Zoom({
-                    position: "topright"
-                }),
-                isHost ?
-                new L.Control.MapBtn({
-                    position: "bottomright",
-                    classList: "deleteMap",
-                    innerMsg: "Delete Map",
-                    funcExec: () => {
-                        //this.#delLayerPop.setState("remove");
-                    }
-                }) : undefined
-            ]
         }).setView([0, 0], 0);
+
+        /*>---------- [ Sidebar Initialization ] ----------<*/
+        const sidebar = new L.Control.Sidebar({
+            position: "left",
+            closeButton: false,
+            autopan: true,
+            defaultBtn: false
+        }).addTo(MapHandeler.#atlas);
+
+        /*>---------- [ DeleteBtn Initialization ] ----------<*/
+        if (isHost) {
+            const delMapPopup = new PopupHandler("delMapPopup", false);
+            new L.Control.MapBtn({
+                position: "bottomright",
+                className: "delMap",
+                innerMsg: "Delete Map",
+                action: () => delMapPopup.reveal()
+            }).addTo(MapHandeler.#atlas);
+        }
+
+        /*>---------- [ Zoom Initialization ] ----------<*/
+        new L.Control.Zoom({
+            position: "topright"
+        }).addTo(MapHandeler.#atlas);
+    }
+
+    async deleteMapLayer() {
+
     }
 }
