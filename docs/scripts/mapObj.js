@@ -7,6 +7,12 @@ L.Atlas = L.Map.extend({
         this._mapLayers = {};
 
         L.Map.prototype.initialize.call(this, id, options);
+    },
+    getCornerList: function () {
+        return this._controlCorners;
+    },
+    getCornerContainer: function () {
+        return this._controlContainer;
     }
 });
 L.Control.Sidebar = L.Control.extend({
@@ -95,10 +101,10 @@ L.Control.Sidebar = L.Control.extend({
         this.onRemove();
         this._map = map;
         this._container = this.onAdd();
-        const pos = this.getPosition();
+        const position = this.getPosition();
 
         L.DomUtil.addClass(this._container, "leaflet-control");
-        L.DomUtil.addClass(this._container, `leaflet-sidebar-${pos}`);
+        L.DomUtil.addClass(this._container, `leaflet-sidebar-${position}`);
         if (L.Browser.touch)
             L.DomUtil.addClass(this._container, "leaflet-touch");
 
@@ -106,16 +112,17 @@ L.Control.Sidebar = L.Control.extend({
         L.DomEvent.disableClickPropagation(this._container);
         L.DomEvent.on(this._container, "contextmenu", L.DomEvent.stopPropagation);
 
-        const sideControl = document.createElement("div");
-        sideControl.className = `leaflet-${pos}`;
-        Object.entries(map._controlCorners).forEach(([corner, control]) => {
-            if (corner.includes(pos)) {
-                delete map._controlCorners[corner];
-                control.remove();
+        const sideControl = L.DomUtil.create("div", `leaflet-${position}`, map.getCornerContainer());
+        const cornerList = map.getCornerList();
+        Object.entries(cornerList).forEach(([posKey, corner]) => {
+            if (posKey.includes(position)) {
+                sideControl.innerHTML += corner.innerHTML;
+                delete cornerList[posKey];
+                corner.remove();
             }
         });
-        map._controlCorners[pos] = sideControl;
-        map._controlContainer.appendChild(sideControl);
+        cornerList[position] = sideControl;
+
 
         sideControl.appendChild(this._container);
         return this;
@@ -298,17 +305,22 @@ L.Control.MapBtn = L.Control.extend({
 
 
 class MapHandeler {
-    static #atlas = null;
+    #atlas = null;
     constructor() {
         const main = document.getElementsByTagName("main")[0];
         /*>---------- [ Map Initialization ] ----------<*/
-        MapHandeler.#atlas = new L.Atlas(
-            main.appendChild(document.createElement("span")), {
+        this.#atlas = new L.Atlas(L.DomUtil.create("span", "", main), {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
             maxBoundsViscosity: 1.0,
         }).setView([0, 0], 0);
+
+        /*>---------- [ SearchBtn Initialization ] ----------<*/
+        L.control.search({
+            position: "topleft",
+            autoCollapse: true
+        }).addTo(this.#atlas);
 
         /*>---------- [ Sidebar Initialization ] ----------<*/
         const sidebar = new L.Control.Sidebar({
@@ -316,7 +328,21 @@ class MapHandeler {
             closeButton: false,
             autopan: true,
             defaultBtn: false
-        }).addTo(MapHandeler.#atlas);
+        }).addTo(this.#atlas);
+
+        sidebar.addPanel({
+            title: "Token Information",
+            tabIcon: `<i class="fa-solid fa-location-pin"></i>`,
+            iconBtn: `<i class="fa-solid fa-xmark"></i>`,
+            actionBtn: [sidebar.close, sidebar.removePanel]
+        });
+        sidebar.addPanel({
+            title: "Information",
+            tabIcon: `<i class="fa-solid fa-location-pin"></i>`,
+            iconBtn: `<i class="fa-solid fa-xmark"></i>`,
+            actionBtn: [sidebar.close, sidebar.removePanel]
+        });
+
 
         /*>---------- [ DeleteBtn Initialization ] ----------<*/
         if (isHost) {
@@ -326,13 +352,13 @@ class MapHandeler {
                 className: "delMap",
                 innerMsg: "Delete Map",
                 action: () => delMapPopup.reveal()
-            }).addTo(MapHandeler.#atlas);
+            }).addTo(this.#atlas);
         }
 
         /*>---------- [ Zoom Initialization ] ----------<*/
         new L.Control.Zoom({
             position: "topright"
-        }).addTo(MapHandeler.#atlas);
+        }).addTo(this.#atlas);
     }
 
     async deleteMapLayer() {

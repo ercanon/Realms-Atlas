@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mapHdl = await new MapHandeler();
 
     const bannerElms = document.body.querySelector("header > span");
-    const contElms = document.body.querySelector("main > span");
+    const contElms = document.body.querySelector("main > div");
     if (!isHost) {
         [bannerElms, contElms].forEach(
             (element) => element.classList.add("hide"));
@@ -57,9 +57,7 @@ class PopupHandler {
     static #tmplPopup = null;
     #popup = null;
     constructor(type, isVis) {
-        this.#popup = document.createElement("div");
-        this.#popup.classList.add("hide");
-        PopupHandler.#bgPopup.appendChild(this.#popup);
+        this.#popup = L.DomUtil.create("div", "hide", PopupHandler.#bgPopup);
 
         if(isVis)
             this.reveal();
