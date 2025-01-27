@@ -5,7 +5,7 @@
 	--looseSpaceLyt: calc(var(--spaceLyt) * 3);
 
 	/* Palette */
-	--black:	rgb(50,  50,  50);
+	--black:	rgb(40,  40,  40);
 	--white:	white;
 	--whiteHvr:	rgb(220, 220, 220);
 	--grey:		rgb(128, 128, 128);
@@ -43,7 +43,6 @@ body {
 /*>--------------- { Popup } ---------------<*/
 #bgPopup {
 	position: absolute;
-	z-index: 2000;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -51,6 +50,7 @@ body {
 	height: 100vh;
 	background-color: rgb(65, 65, 65, 0.65);
 	animation: fade-in .3s ease forwards;
+	z-index: 5000;
 }
 
 #bgPopup div {
@@ -71,17 +71,17 @@ body {
 	transition: background-color .3s ease;
 }
 
-.delMapPopup button:nth-child(1) {
+.delMapPopup button:first-child {
 	background-color: var(--red);
 }
-	.delMapPopup button:nth-child(1):hover {
+	.delMapPopup button:first-child:hover {
 		background-color: var(--redHvr);
 	}
 
-.delMapPopup button:nth-child(2) {
+.delMapPopup button:last-child {
 	background-color: var(--grey);
 }
-	.delMapPopup button:nth-child(2):hover {
+	.delMapPopup button:last-child:hover {
 		background-color: var(--greyHvr);
 	}
 
@@ -90,10 +90,10 @@ body {
 /*>--------------- { Banner } ---------------<*/
 header {
 	display: flex;
-	z-index: 1000;
 	padding: var(--tightSpaceLyt) var(--spaceLyt);
 	justify-content: space-between;
 	background-color: var(--black);
+	z-index: 2000;
 }
 
 header > h1 {
@@ -136,23 +136,22 @@ main {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	flex-direction: column;
 	margin: var(--spaceLyt);
 }
 
 main > div {
 	position: absolute;
-	z-index: 200;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: var(--spaceLyt);
+	z-index: 200;
 }
 
 main > span {
-	z-index: 100;
 	height: 100%;
 	width: 100%;
+	z-index: 100;
 }
 
 
