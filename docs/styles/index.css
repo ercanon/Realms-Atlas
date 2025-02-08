@@ -5,7 +5,7 @@
 	--looseSpaceLyt: calc(var(--spaceLyt) * 3);
 
 	/* Palette */
-	--black:	rgb(40,  40,  40);
+	--black:	rgb(50,  50,  50);
 	--white:	white;
 	--whiteHvr:	rgb(220, 220, 220);
 	--grey:		rgb(128, 128, 128);
@@ -93,7 +93,7 @@ header {
 	padding: var(--tightSpaceLyt) var(--spaceLyt);
 	justify-content: space-between;
 	background-color: var(--black);
-	z-index: 2000;
+	z-index: 3000;
 }
 
 header > h1 {
@@ -139,19 +139,12 @@ main {
 	margin: var(--spaceLyt);
 }
 
-main > div {
+#imgInput {
 	position: absolute;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: var(--spaceLyt);
-	z-index: 200;
-}
-
-main > span {
-	height: 100%;
-	width: 100%;
-	z-index: 100;
 }
 
 

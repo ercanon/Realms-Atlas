@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mapHdl = await new MapHandeler();
 
     const bannerElms = document.body.querySelector("header > span");
-    const contElms = document.body.querySelector("main > div");
+    const contElms = document.getElementById("imgInput");
     if (!isHost) {
         [bannerElms, contElms].forEach(
             (element) => element.classList.add("hide"));
