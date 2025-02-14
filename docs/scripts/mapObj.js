@@ -23,12 +23,12 @@ L.Atlas = L.Map.extend({
 
         const leftContent = this._leftContent   = createElement(["content", "left", this._container, "span"]);
         const rightContent = this._rightContent = createElement(["content", "right", this._container, "span"]);
-        const topContent = this._topContent = createElement(["content", "top", this._container, "span"]);
-        const bottomContent = this._bottomContent = createElement(["content", "bottom", this._container, "span"]);
+        //const topContent = this._topContent = createElement(["content", "top", this._container, "span"]);
+        //const bottomContent = this._bottomContent = createElement(["content", "bottom", this._container, "span"]);
 
-        [["side", "top", topContent, "div"],     ["side", "bottom", bottomContent, "div"],
+        [/*["side", "top", topContent, "div"],     ["side", "bottom", bottomContent, "div"],
          ["left", "top", topContent, "div"],     ["left", "bottom", bottomContent, "div"],
-         ["right", "top", topContent, "div"],    ["right", "bottom", bottomContent, "div"],
+         ["right", "top", topContent, "div"],    ["right", "bottom", bottomContent, "div"],*/
          ["side", "left", leftContent, "div"],   ["side", "right", rightContent, "div"],
          ["top", "left", leftContent, "div"],    ["top", "right", rightContent, "div"],
          ["bottom", "left", leftContent, "div"], ["bottom", "right", rightContent, "div"]].forEach((element) =>
@@ -39,10 +39,10 @@ L.Atlas = L.Map.extend({
             L.DomUtil.remove(element));
         delete this._controlCorners;
 
-        L.DomUtil.remove(this._leftContent);
-        L.DomUtil.remove(this._rightContent);
-        delete this._leftContent;
-        delete this._rightContent;
+        ["_leftContent", "_rightContent", /*"_topContent", "_bottomContent"*/].forEach((divContent) => {
+            L.DomUtil.remove(this[divContent]);
+            delete this[divContent];
+        });
     }
 });
 L.Control.prototype.addTo = function (map) {
@@ -155,7 +155,7 @@ L.Control.Sidebar = L.Control.extend({
         return this;
     },
     getEntry: function (prop) {
-        if (prop instanceof L.Control.EntrySidebar)
+        if (prop instanceof L.Control.Sidebar.BlankEntry)
             return this._entries.find((item) => item === prop);
 
         return this._entries.find((item) =>
@@ -177,166 +177,6 @@ L.Control.Sidebar = L.Control.extend({
         }
     }
 })
-L.Control.EntrySidebar = L.Control.extend({
-    includes: L.Evented.prototype || L.Mixin.Events,
-    options: {
-        panel: null,
-        id: "",
-        title: "",
-        tabIcon: true, //TODO
-        iconBtn: true, //TODO
-        actionBtn: [this.close],
-        position: "top",
-        disabled: false
-    },
-    initialize: function (options) {
-        L.setOptions(this, options);
-
-        const { id, actionBtn } = options;
-        if (actionBtn) {
-            this.options.actionBtn = [actionBtn].map((action) => {
-                if (typeof this[action] === "function")
-                    return this[action];
-                return action;
-            }).filter((action) => action !== null);
-        }
-
-        let title = options.title;
-        if (title) {
-            if (title[0] === "<")
-                this.options.title = title = title.slice(1);
-            if (!id)
-                this.options.id = `${title.replace(/ /g, "_")}-panel`
-        }
-
-        return this;
-    },
-    onAdd: function () {
-        const { panel, id, title, tabIcon, iconBtn, actionBtn, disabled } = this.options;
-
-        const contentPanel = this._panel || (typeof panel === "string" ? L.DomUtil.get(panel) : panel) || L.DomUtil.create("div", "leaflet-sidebar-panel");
-        if (!id && typeof panel === "string")
-            contentPanel.id = panel;
-        else
-            contentPanel.id = id;
-
-        if (title) {
-            let header = "";
-            if (typeof iconBtn === "string")
-                header = `<span class="leaflet-sidebar-close">${iconBtn}</span>`;
-            header = `<h1 class="leaflet-sidebar-header">${title + header}</h1>`;
-
-            contentPanel.insertAdjacentHTML("afterbegin", header);
-        }
-
-        this._tab = L.DomUtil.create("a", disabled ? "disabled" : "");
-        Object.assign(this._tab, {
-            innerHTML: tabIcon,
-            href: `#${id}`,
-            role: "tablist",
-            title
-        });
-        this._tabClick("on");
-
-        const headerBtnList = Array.from(contentPanel.querySelectorAll(".leaflet-sidebar-close"));
-        if (headerBtnList.length) {
-            this._headerBtn = headerBtnList.at(-1);
-            this._closeClick("on", actionBtn);
-        }
-
-        return contentPanel;
-    },
-    addTo: function (sidebar) {
-        const { id, position } = this.options;
-        if (sidebar.getEntry(id))
-            throw new Error(`Panel with ID "${id}" already exist.`);
-
-        this.remove();
-        this._sidebar = sidebar.addEntry(this);
-        this._panel = this.onAdd();
-
-        this._panelContainer = sidebar.getContainer("panel");
-        this._panelContainer.appendChild(this._panel);
-        sidebar.getContainer(position).appendChild(this._tab);
-
-        return this;
-    },
-    open: function () {
-        if (L.DomUtil.hasClass(this._tab, "disabled"))
-            return this;
-
-        const activeEntry = this._sidebar.getEntry(".active");
-        if (activeEntry) {
-            [activeEntry._tab, activeEntry._panel].forEach((entry) =>
-            L.DomUtil.removeClass(entry, "active"))
-        }
-
-        [this._tab, this._panel].forEach((entry) =>
-            L.DomUtil.addClass(entry, "active"))
-        if (L.DomUtil.hasClass(this._panelContainer, "collapsed")) {
-            this.fire("opening");
-            L.DomUtil.removeClass(this._panelContainer, "collapsed");
-            this._sidebar.panMap("open");
-        }
-
-        this.fire("content", this.options.id);
-        return this;
-    },
-    close: function () {
-        L.DomUtil.removeClass(this._tab, "active");
-
-        if (!L.DomUtil.hasClass(this._panelContainer, "collapsed")) {
-            this.fire("closing");
-            L.DomUtil.addClass(this._panelContainer, "collapsed");
-            this._sidebar.panMap("close");
-        }
-
-        return this;
-    },
-    remove: function () {
-        if (this._panelContainer) {
-            L.DomUtil.addClass(this._panelContainer, "collapsed")
-
-            this._tabClick("off");
-            this._tab?.remove();
-
-            this._closeClick("off");
-            this._panel?.remove();
-        }
-
-        return this;
-    },
-    enable: function () {
-        L.DomUtil.removeClass(this._tab, "disabled");
-        return this;
-    },
-    disable: function () {
-        L.DomUtil.addClass(this._tab, "disabled");
-        return this;
-    },
-    //changeIdPanel: function (newId) {
-
-    //},
-    onTabClick: function () {
-        if (L.DomUtil.hasClass(this._tab, "active"))
-            this.close();
-        else if (!L.DomUtil.hasClass(this._tab, "disabled"))
-            this.open();
-    },
-    _tabClick: function (action) {
-        const tab = this._tab;
-        if (tab.hasAttribute("href") && tab.getAttribute("href")[0] === "#")
-            L.DomEvent[action](tab, "click", L.DomEvent.preventDefault, this)
-                      [action](tab, "click", this.onTabClick, this);
-    },
-    _closeClick: function (actionClick) {
-        const {actionBtn} = this.options;
-        if (actionBtn)
-            actionBtn.forEach((action) =>
-                L.DomEvent[actionClick](this._headerBtn, "click", action, this));
-    }
-});
-
 L.Control.MapBtn = L.Control.extend({
     options: {
         className: null,
@@ -349,6 +189,127 @@ L.Control.MapBtn = L.Control.extend({
         button.innerHTML = innerMsg;
         button.onclick = action;
         return button;
+    }
+});
+
+L.DivIcon.MarkerEntry = L.DivIcon.extend({
+    _stringDOM: document.createElement("span"),
+    options: {
+        markerName: "",
+        _iconName: "",
+        defaultName: "",
+        transformIcon: {},
+        structureEntry: "",
+        actionEntry: null
+    },
+    initialize: function (markerInput, markerControls, options) {
+        const isString = typeof markerInput === "string";
+
+        this.markerRef = isString
+            ? Iconify.renderSVG(markerInput, { height: "unset" })
+            : markerInput.markerRef.cloneNode(true);
+
+        this.spotRef = this.markerRef.firstElementChild;
+
+        this.iconRef = isString
+            ? document.createElementNS("http://www.w3.org/2000/svg", "path")
+            : this.markerRef.lastElementChild;
+        this.markerRef.appendChild(this.iconRef);
+
+        this.markerRef.id = `${Date.now()}${isString ? "-static" : ""}-marker`
+        this.markerRef.removeAttribute("style");
+
+        if (isString) {
+            Object.assign(this.markerRef.style, {
+                position: "absolute",
+                transform: "scale(0)"
+            });
+            this.iconRef.style.transformOrigin = "center";
+            Object.entries(markerControls).forEach(([name, prop]) =>
+                this.setProperty(name, prop.value));
+        }
+
+        L.setOptions(this, (isString ? options : markerInput.options));
+    },
+    createIcon: function () {
+        this._stringDOM.innerHTML =
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${this.markerRef.getAttribute("viewBox")}">
+                <use href="#${this.markerRef.id}"></use>
+            </svg>`
+        return this._stringDOM.firstElementChild;
+    },
+    createEntry: function () {
+        this._stringDOM.innerHTML = this.options.structureEntry;
+
+        this.entry = this._stringDOM.firstElementChild;
+        const { input, figure, button } = setList(this.entry.children, "localName");
+
+        figure.prepend(this.markerRef);
+        this.caption = figure.querySelector(":scope > figCaption");
+        this.setProperty("nameMarker");
+
+        input.addEventListener("click", this._toggleVis = () => { });
+
+        figure.addEventListener("click", this._activeEntry = () => {
+            this.options.actionEntry(this);
+        });
+
+        button.addEventListener("click", this._deleteEntry = () => {
+            activateMarker(null);
+            figure.removeEventListener("click", this._activeEntry);
+            checkbox.removeEventListener("click", this._toggleVis);
+            button.removeEventListener("click", this._deleteEntry);
+            this.entry.remove();
+        });
+
+        return this.entry;
+    },
+    setProperty: function (property, input) {
+        switch (property) {
+            case "iconMarker":
+                this.options._iconName = input;
+                this._stringDOM.innerHTML = Iconify.getIcon(input).body;
+                this.iconRef.setAttribute("d",
+                    this._stringDOM.querySelector("path").getAttribute("d"));
+                break;
+            case "nameMarker":
+                const { markerName, defaultName, _iconName } = this.options
+                const nameEntry = this.options.markerName = input || markerName || defaultName || _iconName;
+                if (this.caption)
+                    this.caption.textContent = nameEntry;
+                break;
+            case "posIcon":
+                this._parseInput("translate", input, (pos) =>
+                    `${pos.trim().replace(/[^0-9.-]/g, "")}${pos.match(/%/)?.[0] || "px"}`)
+                break;
+            case "scaleIcon":
+                this._parseInput("scale", input, (scale) =>
+                    scale.trim().replace(/[^0-9.-]/g, ""));
+                break;
+            case "colorMarker":
+            case "colorIcon":
+                (property === "colorMarker" ? this.spotRef : this.iconRef).setAttribute("fill",
+                    input);
+                break;
+        }
+    },
+    toggleActive: function (action) {
+        if (!this.entry)
+            return;
+       this.entry.classList[action]("active");
+    },
+    _parseInput: function (type, value, input) {
+        const axis = value
+            .replace(/,/g, ".")
+            .split(":")
+            .map(input);
+
+        const transProps = this.options.transformIcon
+        transProps[type] = axis;
+        this.iconRef.style.transform = Object.entries(transProps)
+            .map(([key, value]) =>
+                `${key}(${value.length === 1 ? value[0] : value.join(", ")})`)
+            .join(" ");
     }
 });
 
@@ -370,17 +331,11 @@ class MapHandeler {
             autopan: true
         }).addTo(this.#atlas);
 
-        new L.Control.EntrySidebar({
-            title: "Token Information",
-            tabIcon: `<iconify-icon icon="material-symbols:add-location" noobserver></iconify-icon>`,
-            iconBtn: `<iconify-icon icon="material-symbols:close-rounded" noobserver></iconify-icon>`,
-            actionBtn: "remove"
+        new L.Control.Sidebar.InfoEntry({
+            title: "Map Information"
         }).addTo(sidebar);
-        new L.Control.EntrySidebar({
-            title: "Information",
-            tabIcon: `<iconify-icon icon="material-symbols:add-location" noobserver></iconify-icon>`,
-            iconBtn: `<iconify-icon icon="material-symbols:close-rounded" noobserver></iconify-icon>`,
-            actionBtn: "remove"
+        new L.Control.Sidebar.MarkerListEntry({
+            title: "Marker Index"
         }).addTo(sidebar);
 
         /*>---------- [ SearchBtn Initialization ] ----------<*/
@@ -401,15 +356,7 @@ class MapHandeler {
 
             /*>---------- [ DeleteBtn Initialization ] ----------<*/
             this.#atlas.pm.addControls({
-                position: "topleft",
-                drawMarker: true,
-                drawPolygon: true,
-                drawPolyline: true,
-                drawCircle: true,
-                editMode: true,
-                dragMode: true,
-                cutPolygon: true,
-                removalMode: true,
+                position: "topleft"
             });
         }
 

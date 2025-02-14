@@ -1,6 +1,7 @@
 /*>--------------- { DeleteBtn } ---------------<*/
 .delMap {
     padding: var(--tightSpaceLyt);
+    width: 80px;
     font-size: .8rem;
     font-weight: bold;
     color: var(--white);
@@ -14,12 +15,6 @@
 
 
 /*>--------------- { Control Container } ---------------<*/
-.leaflet-top,
-.leaflet-bottom,
-.leaflet-left,
-.leaflet-right{
-    inset: unset;
-}
 .leaflet-left .leaflet-control,
 .leaflet-right .leaflet-control{
     margin: unset;
@@ -33,16 +28,18 @@
     grid-template-areas:
         "side top"
         "side bottom";
-    width: 100%;
     height: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    z-index: 800;
 }
     .leaflet-content.leaflet-right {
         direction: rtl;
     }
     .leaflet-content.leaflet-right > * {
         direction: ltr;
+    }
+    .leaflet-content:has(.leaflet-sidebar) {
+        z-index: 1000;
     }
 
 .leaflet-top {
@@ -62,29 +59,31 @@
 .leaflet-side:has(> .leaflet-sidebar) {
     width: 100%;
     gap: var(--spaceLyt);
-    --borderSidebar: 2px solid rgba(0, 0, 0, .2);
+    --borderControls: 2px solid rgba(0, 0, 0, .2);
+    --borderContents: 1px solid #ccc;
     --widthSidebar: 35px;
 }
 
-@media (min-width: 800px) {
+@media (min-width: 600px) {
     .leaflet-content {
         padding: var(--spaceLyt);
         gap: var(--spaceLyt);
     }
-    .leaflet-side:has(> .leaflet-sidebar):not(:has(.collapsed)){
+    .leaflet-side:has(> .leaflet-sidebar):not(:has(.collapsed)) {
         width: 40vw;
         max-width: 550px;
     }
 }
-@media (max-width: 799px) {
+@media (max-width: 599px) {
     .leaflet-content:has(.leaflet-sidebar):not(:has(.collapsed)) {
+        width: 100%;
         grid-template-columns: 1fr 0fr;
     }
 }
 
 /*>---------- [ Search Btn (TODO) ] ----------<*/
 .leaflet-control-search {
-    border: var(--borderSidebar);
+    border: var(--borderControls);
     background-color: var(--white);
 }
 
@@ -135,14 +134,14 @@
         color: #aaa
     }
 
-.leaflet-control-search .search-button {
-    float: left;
-    width: var(--widthSidebar);
-    aspect-ratio: 1 / 1;
-    background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik05LjUgMTZxLTIuNzI1IDAtNC42MTItMS44ODhUMyA5LjV0MS44ODgtNC42MTJUOS41IDN0NC42MTMgMS44ODhUMTYgOS41cTAgMS4xLS4zNSAyLjA3NVQxNC43IDEzLjNsNS42IDUuNnEuMjc1LjI3NS4yNzUuN3QtLjI3NS43dC0uNy4yNzV0LS43LS4yNzVsLTUuNi01LjZxLS43NS42LTEuNzI1Ljk1VDkuNSAxNm0wLTJxMS44NzUgMCAzLjE4OC0xLjMxMlQxNCA5LjV0LTEuMzEyLTMuMTg3VDkuNSA1VDYuMzEzIDYuMzEzVDUgOS41dDEuMzEzIDMuMTg4VDkuNSAxNCIvPjwvc3ZnPg==) no-repeat 5px #fff;
-}
+    .leaflet-control-search .search-button {
+        float: left;
+        width: var(--widthSidebar);
+        aspect-ratio: 1 / 1;
+        background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik05LjUgMTZxLTIuNzI1IDAtNC42MTItMS44ODhUMyA5LjV0MS44ODgtNC42MTJUOS41IDN0NC42MTMgMS44ODhUMTYgOS41cTAgMS4xLS4zNSAyLjA3NVQxNC43IDEzLjNsNS42IDUuNnEuMjc1LjI3NS4yNzUuN3QtLjI3NS43dC0uNy4yNzV0LS43LS4yNzVsLTUuNi01LjZxLS43NS42LTEuNzI1Ljk1VDkuNSAxNm0wLTJxMS44NzUgMCAzLjE4OC0xLjMxMlQxNCA5LjV0LTEuMzEyLTMuMTg3VDkuNSA1VDYuMzEzIDYuMzEzVDUgOS41dDEuMzEzIDMuMTg4VDkuNSAxNCIvPjwvc3ZnPg==) no-repeat center #fff;
+    }
     .leaflet-control-search .search-button:hover {
-        background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjOTM5MzkzIiBkPSJNOS41IDE2cS0yLjcyNSAwLTQuNjEyLTEuODg4VDMgOS41dDEuODg4LTQuNjEyVDkuNSAzdDQuNjEzIDEuODg4VDE2IDkuNXEwIDEuMS0uMzUgMi4wNzVUMTQuNyAxMy4zbDUuNiA1LjZxLjI3NS4yNzUuMjc1Ljd0LS4yNzUuN3QtLjcuMjc1dC0uNy0uMjc1bC01LjYtNS42cS0uNzUuNi0xLjcyNS45NVQ5LjUgMTZtMC0ycTEuODc1IDAgMy4xODgtMS4zMTJUMTQgOS41dC0xLjMxMi0zLjE4N1Q5LjUgNVQ2LjMxMyA2LjMxM1Q1IDkuNXQxLjMxMyAzLjE4OFQ5LjUgMTQiLz48L3N2Zz4=) no-repeat 5px #fafafa
+        background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjOTM5MzkzIiBkPSJNOS41IDE2cS0yLjcyNSAwLTQuNjEyLTEuODg4VDMgOS41dDEuODg4LTQuNjEyVDkuNSAzdDQuNjEzIDEuODg4VDE2IDkuNXEwIDEuMS0uMzUgMi4wNzVUMTQuNyAxMy4zbDUuNiA1LjZxLjI3NS4yNzUuMjc1Ljd0LS4yNzUuN3QtLjcuMjc1dC0uNy0uMjc1bC01LjYtNS42cS0uNzUuNi0xLjcyNS45NVQ5LjUgMTZtMC0ycTEuODc1IDAgMy4xODgtMS4zMTJUMTQgOS41dC0xLjMxMi0zLjE4N1Q5LjUgNVQ2LjMxMyA2LjMxM1Q1IDkuNXQxLjMxMyAzLjE4OFQ5LjUgMTQiLz48L3N2Zz4=) no-repeat center  #fafafa
     }
 
 .leaflet-control-search .search-tooltip {
@@ -156,7 +155,7 @@
     max-height: 122px;
     box-shadow: 1px 1px 6px rgba(0,0,0,.4);
     background-color: rgba(0,0,0,.25);
-    z-index: 1000;
+    z-index: 2000;
     overflow-y: auto;
     overflow-x: hidden;
     cursor: pointer
@@ -206,12 +205,12 @@
 }
     .leaflet-sidebar-sideright > .leaflet-sidebar-content,
     .leaflet-sidebar-sideleft > .leaflet-sidebar-tabs {
-        border: var(--borderSidebar);
+        border: var(--borderControls);
         border-right: 0;
     }
     .leaflet-sidebar-sideleft > .leaflet-sidebar-content,
     .leaflet-sidebar-sideright > .leaflet-sidebar-tabs {
-        border: var(--borderSidebar);
+        border: var(--borderControls);
         border-left: 0;
     }
 
@@ -221,7 +220,7 @@
     color: var(--black);
     background-color: var(--white);
     overflow: hidden;
-    z-index: 1000;
+    z-index: 1500;
 }
 .leaflet-sidebar-tabs > nav:last-child {
     bottom: 0;
@@ -262,29 +261,30 @@
     height: inherit;
     background-color: var(--white);
     overflow: hidden;
-    z-index: 900;
+    z-index: 1100;
 }
-.leaflet-sidebar-panel {
+.sidebar-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
-    margin: var(--spaceLyt);
+    height: 100%;
+    gap: var(--spaceLyt);
+    padding-bottom: var(--spaceLyt);
 }
     .leaflet-sidebar-content.collapsed,
-    .leaflet-sidebar-panel:not(.active) {
+    .sidebar-panel:not(.active) {
         display: none;
     }
-.leaflet-sidebar-header {
-    position: sticky;
-    margin: calc(-1 * var(--spaceLyt));
+
+.sidebar-panel-header {
     padding-inline: var(--spaceLyt);
     height: var(--widthSidebar);
-    line-height: var(--widthSidebar);
+    align-content: center;
     font-size: 1.3rem;
     color: var(--white);
     background-color: var(--black);
 }
-
-.leaflet-sidebar-close {
+.sidebar-panel-close {
     position: absolute;
     right: 0;
     height: 100%;
@@ -292,3 +292,192 @@
     text-align: center;
     cursor: pointer;
 }
+
+.sidebar-panel > *:not(h1) {
+    margin-inline: var(--spaceLyt);
+}
+
+.sidebar-panel-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+
+}
+
+
+
+/*>--------------- { Info Panel } ---------------<*/
+.panel-info > textarea {
+    flex: 1;
+    padding: var(--tightSpaceLyt);
+    resize: none;
+}
+
+.panel-info > .sidebar-panel-content {
+    flex: 4;
+    word-wrap: break-word;
+    text-align: justify;
+    font-size: .9rem;
+}
+    .panel-info > .sidebar-panel-content h1 { /*TODO*/
+        font-size: 1.5rem;
+        margin-top: 1rem;
+    }
+    .panel-info > .sidebar-panel-content h2 { /*TODO*/
+        font-size: 1.25rem;
+        margin-top: .75rem;
+    }
+    .panel-info > .sidebar-panel-content p { /*TODO*/
+        margin: .5rem 0;
+    }
+    .panel-info > .sidebar-panel-content code { /*TODO*/
+        background-color: #eee;
+        padding: .12rem .25rem;
+        border-radius: .78rem;
+    }
+    .panel-info > .sidebar-panel-content pre { /*TODO*/
+        background-color: #eee;
+        padding: .62rem;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    .panel-info > .sidebar-panel-content a { /*TODO*/
+        color: var(--blue);
+        text-decoration: underline;
+    }
+
+
+
+/*>--------------- { Marker Panel } ---------------<*/
+.panel-markers > span {
+    z-index: 1200;
+}
+.panel-markers-editor {
+    display: grid;
+    grid-template-columns: 3fr 4fr 4fr;
+    grid-template-rows: 1fr 2fr 2fr;
+    grid-template-areas:
+        "icon name        name"
+        "icon colorMarker colorIcon"
+        "icon posIcon     scaleIcon";
+    align-items: center;
+    font-size: 0.9rem;
+    text-align: center;
+    gap: var(--spaceLyt);
+    font-size: .9rem;
+}
+
+.panel-markers-editor > figure {
+    grid-area: icon;
+    border: var(--borderContents);
+    background-color: var(--white);
+    font-weight: bold;
+}
+#nameMarker {
+    grid-area: name;
+    box-sizing: border-box;
+}
+.panel-markers-editor > span:has(#colorMarker) {
+    grid-area: colorMarker;
+}
+.panel-markers-editor > span:has(#colorIcon) {
+    grid-area: colorIcon;
+}
+.panel-markers-editor > span:has(#posIcon) {
+    grid-area: posIcon;
+}
+.panel-markers-editor > span:has(#scaleIcon) {
+    grid-area: scaleIcon;
+}
+
+.panel-markers-editor input[type="color"] {
+    width: 60%;
+}
+
+
+
+.panel-markers-dropdown {
+    position: absolute;
+    margin-inline: calc(-1 * var(--spaceLyt));
+    width: 100%;
+    border: var(--borderContents);
+    border-radius: var(--tightSpaceLyt);
+    background-color: var(--white);
+    overflow: hidden;
+}
+.panel-markers-dropdown > input[type="text"] {
+    padding: var(--tightSpaceLyt);
+    border: none;
+    border-bottom: var(--borderContents);
+    width: 100%;
+}
+.panel-markers-dropdown > span {
+    display: grid;
+    text-align: center;
+    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+    gap: var(--spaceLyt);
+    padding: var(--spaceLyt);
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 25vh;
+}
+    .panel-markers-dropdown > span figure:hover {
+        border: 2px solid var(--whiteHvr);
+    }
+
+
+
+.panel-markers-btnEntry {
+    width: calc(100% - 2 * var(--spaceLyt));
+    height: var(--widthSidebar);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 21q-.425 0-.712-.288T11 20v-7H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7V4q0-.425.288-.712T12 3t.713.288T13 4v7h7q.425 0 .713.288T21 12t-.288.713T20 13h-7v7q0 .425-.288.713T12 21'/%3E%3C/svg%3E") no-repeat center transparent;
+    border: .13rem dashed var(--grey);
+    border-radius: 0px;
+    transition: all .3s ease;
+}
+    .panel-markers-btnEntry:hover {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%230074d9' d='M12 21q-.425 0-.712-.288T11 20v-7H4q-.425 0-.712-.288T3 12t.288-.712T4 11h7V4q0-.425.288-.712T12 3t.713.288T13 4v7h7q.425 0 .713.288T21 12t-.288.713T20 13h-7v7q0 .425-.288.713T12 21'/%3E%3C/svg%3E");
+        border-color: var(--blue);
+    }
+
+
+/*>---------- [ Marker Entry ] ----------<*/
+.markerEntry {
+    width: 100%;
+    display: flex;
+    opacity: 0;
+    animation: fade-in .3s ease forwards;
+    margin-block: var(--spaceLyt);
+    font-size: 1.1rem;
+    max-height: 4.9rem;
+}
+.markerEntry > input[type="checkbox"] {
+    margin-inline: var(--spaceLyt);
+    width: 1rem;
+}
+.markerEntry > figure {
+    display: flex;
+    flex: 1;
+    padding-block: var(--spaceLyt);
+    border: 2px solid transparent;
+}
+    #dropdownIcon > div figure:hover,
+    .markerEntry > figure:hover {
+        border-color: var(--blueHover);
+    }
+    .markerEntry.active > figure {
+        border-color: var(--blue);
+    }
+.markerEntry > figure > figcaption {
+    align-content: center;
+}
+.markerEntry > button {
+    background: none;
+    font-size: inherit;
+    color: var(--red);
+    padding-inline: var(--spaceLyt);
+}
+    .markerEntry > i:hover {
+        color: var(--redHover);
+    }
