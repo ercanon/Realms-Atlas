@@ -45,6 +45,70 @@ L.Atlas = L.Map.extend({
         });
     }
 });
+L.CanvasLayer = L.GridLayer.extend({
+    options: {
+        maxZoom: 8,
+        img: null
+    },
+
+    /*>---------- [ Tile Rendering ] ----------<*/
+    _setView: function (center, zoom, noPrune, instant) {
+        let targetZoom = Math.round(zoom);
+
+        const isZoomOutOfBounds = (this.options.maxZoom !== undefined && targetZoom > this.options.maxZoom) ||
+            (this.options.minZoom !== undefined && targetZoom < this.options.minZoom);
+
+        targetZoom = isZoomOutOfBounds ? undefined : this._clampZoom(targetZoom);
+
+        if (targetZoom !== null) {
+            const { tileSize, maxNativeZoom } = this.options;
+            this.tileRes = tileSize * Math.pow(2, maxNativeZoom - targetZoom);
+        }
+
+        if (!instant || !(this.options.updateWhenZooming && targetZoom !== this._tileZoom)) {
+            this._tileZoom = targetZoom;
+
+            if (this._abortLoading)
+                this._abortLoading();
+
+            this._updateLevels();
+            this._resetGrid();
+
+            if (targetZoom !== undefined)
+                this._update(center);
+
+            if (!noPrune)
+                this._pruneTiles();
+
+            this._noPrune = !!noPrune;
+        }
+
+        this._setZoomTransforms(center, zoom);
+    },
+    createTile: function (coords) {
+        const tileCanvas = L.DomUtil.create("canvas", "leaflet-tile");
+        const img = this.options.img;
+        tileCanvas.width = tileCanvas.height = this.tileRes;
+
+        const dims = this._getTileDims(coords, img);
+        if (dims)
+            tileCanvas.getContext("2d").drawImage(img, ...dims);
+        else
+            console.warn("Generating outside bounds:", coords);
+
+        return tileCanvas;
+    },
+    _getTileDims: function ({ x, y }, { width, height }) {
+        const tileX = x * this.tileRes;
+        const tileY = y * this.tileRes;
+
+        if (tileX >= width || tileY >= height || tileX < 0 || tileY < 0)
+            return null;
+
+        return [tileX, tileY, this.tileRes, this.tileRes, 0, 0, this.tileRes, this.tileRes];
+    }
+});
+
 L.Control.prototype.addTo = function (map) {
     this.remove();
 
@@ -392,6 +456,24 @@ class MapHandeler {
         new L.Control.Zoom({
             position: "topright"
         }).addTo(this.#atlas);
+    }
+    loadLayer(inputSrc, options) {
+        const img = new Image();
+        img.onload = () => {
+            const bounds = [[0, 0], [-img.height, img.width].map((value) =>
+                value / Math.pow(2, options.maxNativeZoom))];
+            this.#atlas.setMaxBounds(bounds);
+            this.#atlas.fitBounds(bounds);
+
+            new L.CanvasLayer({
+                ...options,
+                minZoom: this.#atlas.getBoundsZoom(bounds),
+                bounds,
+                img
+            }).addTo(this.#atlas);
+        }
+        img.onerror = (event) => { throw new Error(event.target.error) };
+        img.src = inputSrc;
     }
 
     async deleteMapLayer() {

@@ -34,6 +34,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
         dnldDataBtn.addEventListener("click", async () => { });
+        contElms.querySelector(`:scope > input[type="file"]`).addEventListener("change", async function () {
+            const file = this.files?.[0];
+            if (!file)
+                return showError("No file selected.");
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                //dataHdl.exec2Send("put", ["maps", "main", "buffer"], arrayBuffer);
+                mapHdl.loadLayer(URL.createObjectURL(new Blob([arrayBuffer], { type: "image/webp" })), {
+                    tileSize: 256,
+                    maxNativeZoom: 4
+                });
+            }
+            catch (error) {
+                showError("Error loading input file.", error);
+            }
+            finally {
+                this.value = "";
+            }
+        })
     }
 
     initDataPop.delete();
