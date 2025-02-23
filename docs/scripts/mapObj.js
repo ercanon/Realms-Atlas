@@ -195,7 +195,7 @@ L.Control.MapBtn = L.Control.extend({
 L.DivIcon.MarkerEntry = L.DivIcon.extend({
     _stringDOM: document.createElement("span"),
     options: {
-        markerName: "",
+        _markerName: "",
         _iconName: "",
         defaultName: "",
         transformIcon: {},
@@ -216,7 +216,7 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
             : this.markerRef.lastElementChild;
         this.markerRef.appendChild(this.iconRef);
 
-        this.markerRef.id = `${Date.now()}${isString ? "-static" : ""}-marker`
+        this.markerRef.id = `${Date.now()}-marker`
         this.markerRef.removeAttribute("style");
 
         if (isString) {
@@ -230,6 +230,7 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
         }
 
         L.setOptions(this, (isString ? options : markerInput.options));
+        this.options.transformIcon = { ...this.options.transformIcon };
     },
     createIcon: function () {
         this._stringDOM.innerHTML =
@@ -250,14 +251,13 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
 
         input.addEventListener("click", this._toggleVis = () => { });
 
-        figure.addEventListener("click", this._activeEntry = () => {
-            this.options.actionEntry(this);
-        });
+        figure.addEventListener("click", this._activeEntry = () => 
+            this.options.actionEntry(this, this.getProperties()));
 
         button.addEventListener("click", this._deleteEntry = () => {
-            activateMarker(null);
+            this.options.actionEntry(null);
             figure.removeEventListener("click", this._activeEntry);
-            checkbox.removeEventListener("click", this._toggleVis);
+            input.removeEventListener("click", this._toggleVis);
             button.removeEventListener("click", this._deleteEntry);
             this.entry.remove();
         });
@@ -267,24 +267,31 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
     setProperty: function (property, input) {
         switch (property) {
             case "iconMarker":
+                if (this.options._iconName === input)
+                    return;
+
                 this.options._iconName = input;
+                this.setProperty("nameMarker");
+
                 this._stringDOM.innerHTML = Iconify.getIcon(input).body;
                 this.iconRef.setAttribute("d",
                     this._stringDOM.querySelector("path").getAttribute("d"));
                 break;
             case "nameMarker":
-                const { markerName, defaultName, _iconName } = this.options
-                const nameEntry = this.options.markerName = input || markerName || defaultName || _iconName;
+                const { _markerName, defaultName, _iconName } = this.options;
+                this.options._markerName = input || _markerName || "";
+
+                const markerName = this.options._markerName || defaultName || _iconName;
+
                 if (this.caption)
-                    this.caption.textContent = nameEntry;
+                    this.caption.textContent = markerName;
                 break;
-            case "posIcon":
-                this._parseInput("translate", input, (pos) =>
-                    `${pos.trim().replace(/[^0-9.-]/g, "")}${pos.match(/%/)?.[0] || "px"}`)
-                break;
+            case "translateIcon":
             case "scaleIcon":
-                this._parseInput("scale", input, (scale) =>
-                    scale.trim().replace(/[^0-9.-]/g, ""));
+                this._parseInput(property.replace(/Icon$/, ""), input, (value) => {
+                    const cleaned = value.trim().replace(/[^0-9.-]/g, "");
+                    return `${!cleaned || cleaned === "." || cleaned === "-" ? "0" : cleaned}${value.match(/(px|%|em|rem|vw|vh|deg|rad|turn|ex|ch|mm|cm|in|pt|pc|ms|s|fr)/g)?.[0] || ""}`
+                });
                 break;
             case "colorMarker":
             case "colorIcon":
@@ -293,22 +300,32 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
                 break;
         }
     },
-    toggleActive: function (action) {
+    handleActive: function (action) {
         if (!this.entry)
             return;
        this.entry.classList[action]("active");
     },
-    _parseInput: function (type, value, input) {
-        const axis = value
-            .replace(/,/g, ".")
-            .split(":")
-            .map(input);
+    getProperties: function () {
+        return {
+            markerID: this.markerRef.id,
+            iconName: this.options._iconName.split(":")[1],
+            nameMarker: this.options._markerName,
+            translateIcon: this.options.transformIcon.translate,
+            scaleIcon: this.options.transformIcon.scale,
+            colorMarker: this.spotRef.getAttribute("fill"),
+            colorIcon: this.iconRef.getAttribute("fill")
+        }
+    },
+    _parseInput: function (type, input, action) {
+        const axis = input
+            .split(",")
+            .map(action);
 
-        const transProps = this.options.transformIcon
+        const transProps = this.options.transformIcon;
         transProps[type] = axis;
         this.iconRef.style.transform = Object.entries(transProps)
             .map(([key, value]) =>
-                `${key}(${value.length === 1 ? value[0] : value.join(", ")})`)
+                `${key}(${value})`)
             .join(" ");
     }
 });
@@ -327,15 +344,16 @@ class MapHandeler {
         /*>---------- [ Sidebar Initialization ] ----------<*/
         const sidebar = new L.Control.Sidebar({
             position: "sideleft",
-            closeButton: false,
             autopan: true
         }).addTo(this.#atlas);
 
         new L.Control.Sidebar.InfoEntry({
-            title: "Map Information"
+            title: "Map Information",
+            iconBtn: false
         }).addTo(sidebar);
         new L.Control.Sidebar.MarkerListEntry({
-            title: "Marker Index"
+            title: "Marker Index",
+            iconBtn: false
         }).addTo(sidebar);
 
         /*>---------- [ SearchBtn Initialization ] ----------<*/
@@ -357,6 +375,16 @@ class MapHandeler {
             /*>---------- [ DeleteBtn Initialization ] ----------<*/
             this.#atlas.pm.addControls({
                 position: "topleft"
+                //map.pm.enableDraw('Marker', {
+                //    markerStyle: {
+                //        icon: customIcon
+                //    }
+                //});
+                //map.eachLayer((layer) => {
+                //    if (layer instanceof L.Marker) {
+                //        layer.setIcon(customIcon);
+                //    }
+                //});
             });
         }
 

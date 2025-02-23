@@ -4,31 +4,23 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
         panel: null,
         id: "",
         title: "",
-        tabIcon: true, //TODO
-        iconBtn: true, //TODO
-        actionBtn: [this.close],
-        position: "top",
-        disabled: false
+        editTitle: false,
+        iconTab: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M5 15q-.425 0-.712-.288T4 14v-1H3q-.425 0-.712-.288T2 12t.288-.712T3 11h1v-1q0-.425.288-.712T5 9t.713.288T6 10v1h1q.425 0 .713.288T8 12t-.288.713T7 13H6v1q0 .425-.288.713T5 15m9 6V3h6q.825 0 1.413.588T22 5v14q0 .825-.587 1.413T20 21zm-8 0q-.825 0-1.412-.587T4 19v-1.1q0-.4.3-.663T5 17q2.075 0 3.538-1.45T10 12T8.537 8.45T5 7q-.4 0-.7-.25T4 6.1V5q0-.825.588-1.412T6 3h6v18z'/%3E%3C/svg%3E")`,
+        disabledTab: false,
+        iconBtn: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M6.325 12.85q-.225-.15-.337-.375T5.874 12t.113-.475t.337-.375l8.15-5.175q.125-.075.263-.112T15 5.825q.4 0 .7.288t.3.712v10.35q0 .425-.3.713t-.7.287q-.125 0-.262-.038t-.263-.112z'/%3E%3C/svg%3E")`,
+        actionBtn: ["close"],
+        position: "top"
     },
     initialize: function (options) {
         L.setOptions(this, options);
 
-        const { id, actionBtn } = options;
-        if (actionBtn) {
-            this.options.actionBtn = [actionBtn].map((action) => {
-                if (typeof this[action] === "function")
-                    return this[action];
-                return action;
-            }).filter((action) => action !== null);
-        }
-
-        let title = options.title;
-        if (title) {
-            if (title[0] === "<")
-                this.options.title = title = title.slice(1);
-            if (!id)
-                this.options.id = `${title.replace(/ /g, "_")}-panel`
-        }
+        const actionBtn = this.options.actionBtn;
+        if (actionBtn)
+            this.options.actionBtn = actionBtn.reduce((array, action) => {
+                if (action in L.Control.Sidebar.BlankEntry.prototype)
+                    array.push(this[action]);
+                return array;
+            }, []);
 
         return this;
     },
@@ -36,44 +28,47 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
 
     },
     addTo: function (sidebar) {
-        const { panel, id, title, tabIcon, iconBtn, actionBtn, disabled, position } = this.options;
-        if (sidebar.getEntry(id))
+        const { panel, id, title, editTitle, iconTab, iconBtn, actionBtn, disabled, position } = this.options;
+        if (id && sidebar.getEntry(id))
             throw new Error(`Panel with ID "${id}" already exist.`);
 
         this.remove();
         this._sidebar = sidebar.addEntry(this);
 
-        this._panel = this._panel || (typeof panel === "string" ? L.DomUtil.get(panel) : panel) || L.DomUtil.create("span", "sidebar-panel");
+        this._panel = this._panel || (typeof panel === "string" ? L.DomUtil.get(panel) : panel) || L.DomUtil.create("section", "sidebar-panel");
         if (!id && typeof panel === "string")
             this._panel.id = panel;
         else
-            this._panel.id = id;
+            this._panel.id = id || `${(title || Date.now().toString()).replace(/ /g, "_")}-panel`;
+
+        if (title) {
+            const header = L.DomUtil.create("span", "sidebar-panel-header", this._panel);
+            this._titleInput = L.DomUtil.create("input", "", header);
+            Object.assign(this._titleInput, {
+                type: "type",
+                disabled: !editTitle,
+                value: title
+            });
+            this._titleSubmit("on");
+
+            if (iconBtn) {
+                this._headerBtn = L.DomUtil.create("button", "", header);
+                this._headerBtn.style.setProperty("webkit-mask-image", iconBtn);
+                this._headerBtn.style.setProperty("mask-image", iconBtn);
+                this._headerBtnClick("on", actionBtn);
+            }
+        }
 
         this._content = L.DomUtil.create("div", "sidebar-panel-content", this._panel);
 
-        if (title) {
-            let header = "";
-            if (typeof iconBtn === "string")
-                header = `<span class="sidebar-panel-close">${iconBtn}</span>`;
-            header = `<h1 class="sidebar-panel-header">${title + header}</h1>`;
-
-            this._panel.insertAdjacentHTML("afterbegin", header);
-        }
-
         this._tab = L.DomUtil.create("a", disabled ? "disabled" : "");
         Object.assign(this._tab, {
-            innerHTML: tabIcon,
-            href: `#${id}`,
+            href: `#${this._panel.id}`,
             role: "tablist",
             title
         });
+        this._tab.style.setProperty("--mask-url", iconTab);
         this._tabClick("on");
-
-        const headerBtnList = Array.from(this._panel.querySelectorAll(".sidebar-panel-close"));
-        if (headerBtnList.length) {
-            this._headerBtn = headerBtnList.at(-1);
-            this._closeClick("on", actionBtn);
-        }
 
         this._container = sidebar.getContainer("panel");
         this._container.appendChild(this._panel);
@@ -122,7 +117,8 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
             this._tabClick("off");
             this._tab?.remove();
 
-            this._closeClick("off");
+            this._titleSubmit("off");
+            this._headerBtnClick("off");
             this._panel?.remove();
         }
 
@@ -137,7 +133,11 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
         return this;
     },
     setId: function (id) {
-
+        if (!this.options.id) {
+            const titleId = `${id.target.value.replace(/ /g, "_")}-panel`;
+            this._panel.id = this.options.id || titleId;
+            this._tab.href = `#${titleId}`;
+        }
     },
     setTab: function (tab) {
 
@@ -148,17 +148,20 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
         else if (!L.DomUtil.hasClass(this._tab, "disabled"))
             this.open();
     },
-    _tabClick: function (action) {
+    _tabClick: function (actionClick) {
         const tab = this._tab;
         if (tab.hasAttribute("href") && tab.getAttribute("href")[0] === "#")
-            L.DomEvent[action](tab, "click", L.DomEvent.preventDefault, this)
-            [action](tab, "click", this.onTabClick, this);
+            L.DomEvent[actionClick](tab, "click", L.DomEvent.preventDefault, this)
+            [actionClick](tab, "click", this.onTabClick, this);
     },
-    _closeClick: function (actionClick) {
-        const { actionBtn } = this.options;
+    _headerBtnClick: function (actionClick) {
+        const actionBtn = this.options.actionBtn;
         if (actionBtn)
             actionBtn.forEach((action) =>
                 L.DomEvent[actionClick](this._headerBtn, "click", action, this));
+    },
+    _titleSubmit: function (actionChange) {
+        L.DomEvent[actionChange](this._titleInput, "change", this.setId, this);
     }
 });
 
@@ -166,7 +169,7 @@ L.Control.Sidebar.BlankEntry = L.Control.extend({
 
 L.Control.Sidebar.InfoEntry = L.Control.Sidebar.BlankEntry.extend({
     options: {
-        tabIcon: `<iconify-icon icon="material-symbols:info-rounded" noobserver></iconify-icon>`
+        iconTab: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M12 17q.425 0 .713-.288T13 16v-4q0-.425-.288-.712T12 11t-.712.288T11 12v4q0 .425.288.713T12 17m0-8q.425 0 .713-.288T13 8t-.288-.712T12 7t-.712.288T11 8t.288.713T12 9m0 13q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22'/%3E%3C/svg%3E")`
     },
     onAdd: function () {
         this._panel.classList.add("panel-info");
@@ -186,7 +189,7 @@ L.Control.Sidebar.InfoEntry = L.Control.Sidebar.BlankEntry.extend({
 
 L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
     options: {
-        tabIcon: `<iconify-icon icon="material-symbols:file-map-stack-rounded" noobserver></iconify-icon>`,
+        iconTab: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M8 18q-.825 0-1.412-.587T6 16V4q0-.825.588-1.412T8 2h12q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18zm-4 4q-.825 0-1.412-.587T2 20V7q0-.425.288-.712T3 6t.713.288T4 7v13h13q.425 0 .713.288T18 21t-.288.713T17 22zm10-12q-.425 0-.712-.288T13 9t.288-.712T14 8t.713.288T15 9t-.288.713T14 10m0 5q2.025-1.725 3.013-3.187T18 9.1q0-1.875-1.213-2.988T14 5t-2.787 1.113T10 9.1q0 1.25.988 2.713T14 15'/%3E%3C/svg%3E")`,
         staticMarker: {}
     },
     onAdd: function () {
@@ -194,7 +197,7 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
 
         if (isHost) {
             this._content.insertAdjacentHTML("beforebegin",
-                `<span>
+                `<section>
                     <div class="panel-markers-editor">
                         <figure>
                             <figcaption></figcaption>
@@ -208,12 +211,12 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                             <input type="color" id="colorIcon" value="#ffffff">
                         </span>
                         <span>
-                            <label for="scaleIcon">Icon Scale (X:Y)<br></label>
-                            <input type="text" id="scaleIcon" placeholder="Ex: 10 : 20" value=".4">
+                            <label for="scaleIcon">Icon Scale (X,Y)<br></label>
+                            <input type="text" id="scaleIcon" placeholder="Ex: 10 , 20" value=".4">
                         </span>
                         <span>
-                            <label for="posIcon">Icon Position (X:Y)<br></label>
-                            <input type="text" id="posIcon" title="Icon Position (X:Y)" placeholder="Ex: 10% : 20" value="0 : -45%">
+                            <label for="translateIcon">Icon Position (X,Y)<br></label>
+                            <input type="text" id="translateIcon" placeholder="Ex: 10% , 20px" value="0 , -45%">
                         </span>                    
                         <input type="text" id="nameMarker" placeholder="Marker Name">
                     </div>
@@ -221,10 +224,12 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                         <input type="text" placeholder="Search icons...">
                         <span></span>
                     </div>
-                </span>`
+                </section>`
             );
             this._content.insertAdjacentHTML("afterend",
-                `<button class="panel-markers-btnEntry"> </button>`
+                `<button class="panel-markers-btnEntry">
+                    
+                </button>`
             );
 
             /*>---------- [ Create Spot ] ----------<*/
@@ -243,24 +248,32 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
             });
             this.options.staticMarker = this.activeMarker = new L.DivIcon.MarkerEntry(spotName, markerControls, {
                 structureEntry:
-                    `<div class="markerEntry">
+                    `<span class="markerEntry">
                        <input type="checkbox" checked>
                        <figure>
                            <figcaption></figcaption>
                        </figure>
                        <button> </button>
-                    </div>`,
-                actionEntry: (marker) => {
-                    this.activeMarker?.toggleActive("remove");
+                    </span>`,
+                actionEntry: (markerInst, markerProps) => {
+                    this.activeMarker?.handleActive("remove");
 
-                    if (!marker || this.activeMarker === marker)
+                    if (!markerInst || this.activeMarker === markerInst) {
                         this.activeMarker = this.options.staticMarker;
+                        markerProps = this.activeMarker.getProperties();
+                    }
                     else {
-                        marker.toggleActive("add");
-                        this.activeMarker = marker;
+                        markerInst.handleActive("add");
+                        this.activeMarker = markerInst;
                     }
 
-                    this._markerPreviewRef?.setAttribute("href", `#${this.activeMarker.markerRef.id}`)
+                    Object.entries(markerProps).forEach(([control, value]) => {
+                        const inputControl = markerControls[control];
+                        if (inputControl)
+                            inputControl.value = value;
+                    });
+                    iconName.textContent = markerProps.iconName;
+                    this._markerPreviewRef?.setAttribute("href", `#${markerProps.markerID}`);
                 }
             });
             markerEditor.prepend(this.activeMarker.markerRef);

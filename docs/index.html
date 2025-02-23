@@ -33,26 +33,13 @@
 </head>
 <body>
     <!--Popup Structure-->
-    <template id="contPopupTmpl">
-        <span class="delMapPopup">
-            <button>Delete</button>
-            <button>Cancel</button>
-        </span>
-        <span class="urlPopupTmpl">
-        </span>
-    </template>
-
-    <!--Popup Structure-->
     <div id="bgPopup" class="hide"></div>
 
     <!--Banner-->
     <header>
         <h1>Realms' Atlas</h1>
-        <span>
-            <button>Spectator URL</button>
-            <iconify-icon icon="material-symbols:sim-card-download-rounded" noobserver></iconify-icon>
-            <!--material-symbols:search-rounded-->
-        </span>
+        <button id="headerShare">Spectator URL</button>
+        <button id="headerDownload"></button>
     </header>
 
     <!--Web Contents-->

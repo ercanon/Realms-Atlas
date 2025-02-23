@@ -1,7 +1,5 @@
 /*>--------------- { Web Initialization } ---------------<*/
 document.addEventListener('DOMContentLoaded', async () => {
-    PopupHandler.initialize();
-
     //Start loading initial data
     const initDataPop = new PopupHandler("Loading previous session data...", true);
 
@@ -11,15 +9,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 /*    dataHdl = await new DataHandeler(p2pID);*/
     mapHdl = await new MapHandeler();
 
-    const bannerElms = document.body.querySelector("header > span");
+    const shareBtn = document.getElementById("headerShare");
+    const dnldDataBtn = document.getElementById("headerDownload");
     const contElms = document.getElementById("imgInput");
     if (!isHost) {
-        [bannerElms, contElms].forEach(
+        [shareBtn, dnldDataBtn, contElms].forEach(
             (element) => element.classList.add("hide"));
     }
     else {
         const shareURL = `${window.location.origin + window.location.pathname}?id=`;//dataHdl.getPeerID()
-        bannerElms.querySelector(":scope > button").addEventListener("click", async () => {
+        shareBtn.addEventListener("click", async () => {
             try {
                 if (navigator.share)
                     await navigator.share({
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showError("Error sharing URL.", error);
             }
         });
-        bannerElms.querySelector(":scope > iconify-icon").addEventListener("click", async () => { });
+        dnldDataBtn.addEventListener("click", async () => { });
     }
 
     initDataPop.delete();
@@ -55,41 +54,57 @@ function setList(entries, key) {
 
 class PopupHandler {
     static #bgPopup = null;
-    static #tmplPopup = null;
     #popup = null;
+    #functionList = [];
     constructor(type, isVis) {
-        this.#popup = L.DomUtil.create("div", "hide", PopupHandler.#bgPopup);
+        if (!PopupHandler.#bgPopup)
+            PopupHandler.#bgPopup = document.getElementById("bgPopup");
 
+        this.#popup = L.DomUtil.create("div", "hide", PopupHandler.#bgPopup);
         if(isVis)
             this.reveal();
+
         switch (type) {
             case "delMapPopup":
-                this.#fillTitle("Are you sure you want to delete this layer?");
-                this.#popup.appendChild(PopupHandler.#tmplPopup.delMapPopup.cloneNode(true));
+                this.#popup.innerHTML =
+                    `<h2>Are you sure you want to delete this layer?</h2>
+                     <span class="delMapPopup">
+                        <button>Delete</button>
+                        <button>Cancel</button>
+                    </span>`;
 
                 const { Delete, Cancel } = setList(this.#popup.querySelectorAll("button"), "innerText");
 
-                Delete.addEventListener("click", () => {
-                    mapHdl.deleteMapLayer()
-                    this.hide();
-                });
-                Cancel.addEventListener("click", () =>
-                    this.hide());
+                this.#functionList = [
+                    {
+                        button: Delete,
+                        event: "click",
+                        action: () => {
+                            mapHdl.deleteMapLayer()
+                            this.hide();
+                        }
+                    },
+                    {
+                        button: Cancel,
+                        event: "click",
+                        action: () =>
+                            this.hide()
+                    }
+                ];
+                this.#inputEvent("on");
                 break;
             case "urlPopupTmpl":
-                this.#fillTitle("URL sharing options");
-                this.#popup.appendChild(PopupHandler.#tmplPopup.urlPopupTmpl.cloneNode(true));
+                this.#popup.innerHTML =
+                    `<h2>URL sharing options</h2>
+                     `;
                 break;
             default:
-                this.#fillTitle(type);
+                this.#popup.innerHTML = `<h2>Are you sure you want to delete this layer?</h2>`;
         }
     }
-    static initialize() {
-        PopupHandler.#bgPopup = document.getElementById("bgPopup");
-        PopupHandler.#tmplPopup = setList(document.getElementById("contPopupTmpl").content.children, "className")
-    }
-    #fillTitle(title) {
-        this.#popup.innerHTML = `<h2>${title}</h2>`;
+    #inputEvent(actionEvent) {
+        this.#functionList.forEach(({ button, event, action }) =>
+            L.DomEvent[actionEvent](button, event, action, this));
     }
 
     hide() {
@@ -104,6 +119,7 @@ class PopupHandler {
     }
     delete() {
         this.hide();
+        this.#inputEvent("off");
         this.#popup.remove();
     }
 }
