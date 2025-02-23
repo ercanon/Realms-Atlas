@@ -1,7 +1,7 @@
 # Node.js dependencies
 node_modules
 
-# Build o carpetas de distribución
+# Build o carpetas de distribuciÃ³n
 dist
 build
 
@@ -9,7 +9,7 @@ build
 .DS_Store
 Thumbs.db
 
-# Archivos de configuración del editor (ejemplo VSCode)
+# Archivos de configuraciÃ³n del editor (ejemplo VSCode)
 .vscode
 .idea
 .code-workspace
@@ -33,6 +33,6 @@ yarn-error.log
 .tar
 .tar.gz
 
-# Configuración personal local (opcional)
+# ConfiguraciÃ³n personal local (opcional)
 .env
 .env.local
