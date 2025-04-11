@@ -190,55 +190,49 @@ L.Control.Sidebar.InfoEntry = L.Control.Sidebar.BlankEntry.extend({
 L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
     options: {
         iconTab: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M8 18q-.825 0-1.412-.587T6 16V4q0-.825.588-1.412T8 2h12q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18zm-4 4q-.825 0-1.412-.587T2 20V7q0-.425.288-.712T3 6t.713.288T4 7v13h13q.425 0 .713.288T18 21t-.288.713T17 22zm10-12q-.425 0-.712-.288T13 9t.288-.712T14 8t.713.288T15 9t-.288.713T14 10m0 5q2.025-1.725 3.013-3.187T18 9.1q0-1.875-1.213-2.988T14 5t-2.787 1.113T10 9.1q0 1.25.988 2.713T14 15'/%3E%3C/svg%3E")`,
-        staticMarker: {}
+        iconList: null
     },
     onAdd: function () {
         this._panel.classList.add("panel-markers");
 
         if (isHost) {
             this._content.insertAdjacentHTML("beforebegin",
-                `<section>
-                    <div class="panel-markers-editor">
-                        <figure>
-                            <figcaption></figcaption>
-                        </figure>
-                        <span>
-                            <label for="colorMarker">Marker Color<br></label>
-                            <input type="color" id="colorMarker">
-                        </span>
-                        <span>
-                            <label for="colorIcon">Icon Color<br></label>
-                            <input type="color" id="colorIcon" value="#ffffff">
-                        </span>
-                        <span>
-                            <label for="scaleIcon">Icon Scale (X,Y)<br></label>
-                            <input type="text" id="scaleIcon" placeholder="Ex: 10 , 20" value=".4">
-                        </span>
-                        <span>
-                            <label for="translateIcon">Icon Position (X,Y)<br></label>
-                            <input type="text" id="translateIcon" placeholder="Ex: 10% , 20px" value="0 , -45%">
-                        </span>                    
-                        <input type="text" id="nameMarker" placeholder="Marker Name">
-                    </div>
-                    <div class="panel-markers-dropdown hide">
-                        <input type="text" placeholder="Search icons...">
-                        <span></span>
-                    </div>
-                </section>`
+                `<div class="panel-markers-editor">
+                    <figure>
+                        <figcaption></figcaption>
+                    </figure>
+                    <span>
+                        <label for="colorMarker">Marker Color<br></label>
+                        <input type="color" id="colorMarker">
+                    </span>
+                    <span>
+                        <label for="colorIcon">Icon Color<br></label>
+                        <input type="color" id="colorIcon" value="#ffffff">
+                    </span>
+                    <span>
+                        <label for="scaleIcon">Icon Scale (X,Y)<br></label>
+                        <input type="text" id="scaleIcon" placeholder="Ex: 10 , 20" value=".4">
+                    </span>
+                    <span>
+                        <label for="translateIcon">Icon Position (X,Y)<br></label>
+                        <input type="text" id="translateIcon" placeholder="Ex: 10% , 20px" value="0 , -45%">
+                    </span>                    
+                    <input type="text" id="nameMarker" placeholder="Marker Name">
+                </div>
+                <div class="panel-markers-dropdown" hidden>
+                    <input type="text" placeholder="Search icons...">
+                    <span></span>
+                </div>`
             );
             this._content.insertAdjacentHTML("afterend",
-                `<button class="panel-markers-btnEntry">
-                    
-                </button>`
-            );
+                `<button class="panel-markers-btnEntry"></button>`);
 
             /*>---------- [ Create Spot ] ----------<*/
-            const markerEditor = this._panel.querySelector(".panel-markers-editor");
-            const iconMarker = markerEditor.querySelector(":scope > figure");
-            const iconName = iconMarker.querySelector(":scope > figcaption");
+            const [banner, markerEditor, dropdownIcon, content, markerBtnEntry] = Object.values(setList(this._panel.children, "className"));
+            const iconMarker = markerEditor.firstElementChild;
+            const iconName = iconMarker.lastElementChild;
             const markerControls = setList(markerEditor.querySelectorAll("input"), "id");
-            const dropdownIcon = this._panel.querySelector(".panel-markers-dropdown");
-            const dropdownGrid = dropdownIcon.querySelector(":scope > span");
+            const dropdownGrid = dropdownIcon.lastElementChild;
 
             const spotName = "spots:plain-marker";
             Iconify.addIcon(spotName, {
@@ -246,7 +240,7 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                 width: 512,
                 height: 512
             });
-            this.options.staticMarker = this.activeMarker = new L.DivIcon.MarkerEntry(spotName, markerControls, {
+            const markerRefEditor = this.activeMarker = new L.DivIcon.MarkerEntry(spotName, markerControls, {
                 structureEntry:
                     `<span class="markerEntry">
                        <input type="checkbox" checked>
@@ -259,7 +253,7 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                     this.activeMarker?.handleActive("remove");
 
                     if (!markerInst || this.activeMarker === markerInst) {
-                        this.activeMarker = this.options.staticMarker;
+                        this.activeMarker = markerRefEditor;
                         markerProps = this.activeMarker.getProperties();
                     }
                     else {
@@ -276,7 +270,7 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                     this._markerPreviewRef?.setAttribute("href", `#${markerProps.markerID}`);
                 }
             });
-            markerEditor.prepend(this.activeMarker.markerRef);
+            markerEditor.prepend(markerRefEditor.markerRef);
 
             iconMarker.prepend(this.activeMarker.createIcon());
             this._markerPreviewRef = markerEditor.querySelector("use");
@@ -287,57 +281,52 @@ L.Control.Sidebar.MarkerListEntry = L.Control.Sidebar.BlankEntry.extend({
                     this.activeMarker.setProperty(id, event.target.value));
                 control.addEventListener("change", (event) => { });
             });
-            iconMarker.addEventListener("click", () =>
-                dropdownIcon.classList.toggle("hide"));
+            iconMarker.addEventListener("click", (event) => {
+                if (!dropdownIcon.style.transform)
+                    dropdownIcon.style.transform = `translateY(${iconMarker.getBoundingClientRect().bottom - 110}px)`;
+                dropdownIcon.hidden = !dropdownIcon.hidden
+            });
             dropdownIcon.addEventListener("mouseleave", () =>
-                dropdownIcon.classList.add("hide"));
+                dropdownIcon.hidden = true);
 
             /*>---------- [ Dropdown List ] ----------<*/
-            const createFigure = (prefixedName, initName) => {
-                const figure = L.DomUtil.create("figure", "", dropdownGrid);
-                figure.appendChild(Iconify.renderSVG(prefixedName, {
-                    height: "unset"
-                }));
-
-                const nameFig = L.DomUtil.create("figcaption", "", figure);
-                const name = prefixedName.split(":")[1];
-                nameFig.textContent = name;
-
-                figure.addEventListener("click", () => {
-                    this.activeMarker.setProperty("iconMarker", prefixedName);
-
-                    iconName.textContent = name;
-                    dropdownIcon.classList.add("hide");
+            this.options.iconList.then((list) => {
+                Iconify.addIcon(`${list.prefix}:none`, {
+                    body: `<path fill="none" d=""/>`,
+                    width: 512,
+                    height: 512
                 });
+                Iconify.addCollection(list);
+                Iconify.listIcons("", list.prefix).forEach((prefixedName) => {
+                    const figure = L.DomUtil.create("figure", "", dropdownGrid);
+                    figure.appendChild(Iconify.renderSVG(prefixedName, {
+                        height: "unset"
+                    }));
 
-                if (prefixedName.includes(initName))
-                    figure.click();
-            };
-            fetch("https://cdn.jsdelivr.net/npm/@iconify-json/game-icons/icons.json")
-                .then((response) =>
-                    response.json())
-                .then((data) => {
-                    Iconify.addIcon(`${data.prefix}:none`, {
-                        body: `<path fill="none" d=""/>`,
-                        width: 512,
-                        height: 512
+                    const nameFig = L.DomUtil.create("figcaption", "", figure);
+                    const name = prefixedName.split(":")[1];
+                    nameFig.textContent = name;
+
+                    figure.addEventListener("click", () => {
+                        this.activeMarker.setProperty("iconMarker", prefixedName);
+
+                        iconName.textContent = name;
+                        dropdownIcon.hidden = true;
                     });
-                    Iconify.addCollection(data);
 
-                    Iconify.listIcons("", data.prefix).forEach((iconName) =>
-                        createFigure(iconName, "none"));
-                })
-                .catch((error) =>
-                    console.error("Error loading icons", error));
+                    if (prefixedName.includes("none"))
+                        figure.click();
+                });
+            });
 
-            dropdownIcon.querySelector(`:scope > input[type="text"]`).addEventListener("input", (event) => {
+            dropdownIcon.firstElementChild.addEventListener("input", (event) => {
                 const textInput = event.target.value.toLowerCase();
                 [...dropdownGrid.children].forEach(async (icon) =>
-                    icon.classList.toggle("hide", !icon.querySelector("figcaption").textContent.toLowerCase().includes(textInput)));
+                    icon.hidden = !icon.querySelector("figcaption").textContent.toLowerCase().includes(textInput));
             });
 
             /*>---------- [ Marker Btn Handeler ] ----------<*/
-            this._panel.querySelector(".panel-markers-btnEntry").addEventListener("click", () =>
+            markerBtnEntry.addEventListener("click", () =>
                 this._content.appendChild(new L.DivIcon.MarkerEntry(this.activeMarker).createEntry()));
         }
     }
