@@ -283,8 +283,9 @@
     width: 100%;
     height: 100%;
     gap: var(--spaceLyt);
-    padding-bottom: var(--spaceLyt);
     box-sizing: border-box;
+    padding: var(--spaceLyt);
+    --prevPadding: calc(var(--spaceLyt) * -1);
 }
     .leaflet-sidebar-content.collapsed,
     .sidebar-panel:not(.active) {
@@ -298,6 +299,8 @@
     height: var(--widthSidebar);
     color: var(--white);
     background-color: var(--black);
+    margin-top: var(--prevPadding);
+    margin-inline: var(--prevPadding);
 }
 .sidebar-panel-header > input {
     flex: 1;
@@ -325,13 +328,6 @@
     flex-shrink: 0;
 }
 
-.sidebar-panel > *:not(.sidebar-panel-header) {
-    margin-inline: var(--spaceLyt);
-}
-.sidebar-panel:not(:has(.sidebar-panel-header)) {
-    padding-top: var(--spaceLyt);
-}
-
 .sidebar-panel-content {
     overflow-y: auto;
     overflow-x: hidden;
@@ -341,7 +337,7 @@
 
 /*>--------------- { Info Panel } ---------------<*/
 .panel-info > textarea {
-    flex-grow: 1;
+    flex: 1;
     padding: var(--tightSpaceLyt);
     resize: none;
 }
@@ -352,39 +348,45 @@
     text-align: justify;
     font-size: .9rem;
 }
-    .panel-info > .sidebar-panel-content h1 { /*TODO*/
-        font-size: 1.5rem;
-        margin-top: 1rem;
+    .panel-info .sidebar-panel-content > * {
+        margin-bottom: .5rem;
     }
-    .panel-info > .sidebar-panel-content h2 { /*TODO*/
-        font-size: 1.25rem;
-        margin-top: .75rem;
+    .panel-info .sidebar-panel-content *:last-child {
+        margin-bottom: 0;
     }
-    .panel-info > .sidebar-panel-content p { /*TODO*/
-        margin: .5rem 0;
+    .panel-info .sidebar-panel-content h1 {
+        font-size: 1.8rem;
     }
-    .panel-info > .sidebar-panel-content code { /*TODO*/
-        background-color: #eee;
-        padding: .12rem .25rem;
-        border-radius: .78rem;
+    .panel-info .sidebar-panel-content blockquote {
+        background-color: var(--greyHvr);
+        padding-left: .5rem;
+        border: 1px solid var(--grey);
+        border-left: var(--spaceLyt) solid var(--grey);
+        border-radius: var(--tightSpaceLyt);
+        margin: .2rem;
     }
-    .panel-info > .sidebar-panel-content pre { /*TODO*/
-        background-color: #eee;
-        padding: .62rem;
-        border-radius: 5px;
-        overflow-x: auto;
+    .panel-info .sidebar-panel-content > blockquote {
+        margin-bottom: .5rem;
     }
-    .panel-info > .sidebar-panel-content a { /*TODO*/
-        color: var(--blue);
-        text-decoration: underline;
+    .panel-info .sidebar-panel-content ol,
+    .panel-info .sidebar-panel-content ul {
+        margin-left: 1.2rem;
+    }
+    .panel-info .sidebar-panel-content code {
+        background-color: var(--greyHvr);
+        padding: var(--tightSpaceLyt);
+        border-radius: var(--tightSpaceLyt);
+    }
+    .panel-info .sidebar-panel-content table {
+        border-spacing: 1rem .6rem;
+    }
+    .panel-info .sidebar-panel-content hr {
+        margin-block: .7rem;
     }
 
 
 
 /*>--------------- { Marker Panel } ---------------<*/
-.panel-markers > section {
-    z-index: 1200;
-}
 .panel-markers-editor {
     display: grid;
     grid-template-columns: 3fr 4fr 4fr;
@@ -435,33 +437,38 @@
 
 .panel-markers-dropdown {
     position: absolute;
-    margin-inline: calc(-1 * var(--spaceLyt));
+    margin-inline: var(--prevPadding);
     width: 100%;
     border: var(--borderContents);
     border-radius: var(--tightSpaceLyt);
     background-color: var(--white);
     overflow: hidden;
+    z-index: 1200;
 }
 .panel-markers-dropdown > input[type="text"] {
     padding: var(--tightSpaceLyt);
     border: none;
     border-bottom: var(--borderContents);
+    color: var(--black);
+    box-sizing: border-box;
     width: 100%;
 }
 .panel-markers-dropdown > span {
     display: grid;
     text-align: center;
-    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(3.45rem, 1fr));
+    grid-auto-rows: max-content;
     gap: var(--spaceLyt);
     padding: var(--spaceLyt);
+    font-size: .85rem;
     box-sizing: border-box;
     word-wrap: break-word;
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 25vh;
+    height: 25svh;
 }
     .panel-markers-dropdown > span figure:hover {
-        border: 2px solid var(--whiteHvr);
+        outline: 2px solid var(--whiteHvr);
     }
 
 
@@ -469,7 +476,7 @@
 .panel-markers-btnEntry {
     display: flex;
     position: relative;
-    width: 85%;
+    width: 100%;
     height: var(--widthSidebar);
     background: none;
     border: 2px dashed var(--grey);

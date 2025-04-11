@@ -354,7 +354,7 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
             case "scaleIcon":
                 this._parseInput(property.replace(/Icon$/, ""), input, (value) => {
                     const cleaned = value.trim().replace(/[^0-9.-]/g, "");
-                    return `${!cleaned || cleaned === "." || cleaned === "-" ? "0" : cleaned}${value.match(/(px|%|em|rem|vw|vh|deg|rad|turn|ex|ch|mm|cm|in|pt|pc|ms|s|fr)/g)?.[0] || ""}`
+                    return `${!cleaned || cleaned === "." || cleaned === "-" ? "0" : cleaned}${value.match(/(px|pt|pc|in|cm|mm|Q|em|rem|ex|ch|cap|ic|lh|rlh|vw|vh|vmin|vmax|svw|svh|lvw|lvh|dvw|dvh|%|fr)/g)?.[0] || ""}`
                 });
                 break;
             case "colorMarker":
@@ -394,11 +394,11 @@ L.DivIcon.MarkerEntry = L.DivIcon.extend({
     }
 });
 
-class MapHandeler {
-    #atlas = null;
-    constructor() {
+class MapHandler {
+    static #atlas = null;
+    static set() {
         /*>---------- [ Map Initialization ] ----------<*/
-        this.#atlas = new L.Atlas(document.getElementsByTagName("main")[0], {
+        MapHandler.#atlas = new L.Atlas(document.getElementsByTagName("main")[0], {
             crs: L.CRS.Simple,
             zoomSnap: 0.5,
             zoomDelta: 0.5,
@@ -409,14 +409,18 @@ class MapHandeler {
         const sidebar = new L.Control.Sidebar({
             position: "sideleft",
             autopan: true
-        }).addTo(this.#atlas);
+        }).addTo(MapHandler.#atlas);
 
         new L.Control.Sidebar.InfoEntry({
             title: "Map Information",
             iconBtn: false
         }).addTo(sidebar);
+
         new L.Control.Sidebar.MarkerListEntry({
             title: "Marker Index",
+            iconList:
+                fetch("https://cdn.jsdelivr.net/npm/@iconify-json/game-icons/icons.json")
+                    .then((iconList) => iconList.json()),
             iconBtn: false
         }).addTo(sidebar);
 
@@ -424,7 +428,7 @@ class MapHandeler {
         L.control.search({
             position: "sideleft_upper",
             autoCollapse: true
-        }).addTo(this.#atlas);
+        }).addTo(MapHandler.#atlas);
 
         /*>---------- [ DeleteBtn Initialization ] ----------<*/
         if (isHost) {
@@ -434,10 +438,10 @@ class MapHandeler {
                 className: "delMap",
                 innerMsg: "Delete Map",
                 action: () => delMapPopup.reveal()
-            }).addTo(this.#atlas);
+            }).addTo(MapHandler.#atlas);
 
             /*>---------- [ DeleteBtn Initialization ] ----------<*/
-            this.#atlas.pm.addControls({
+            MapHandler.#atlas.pm.addControls({
                 position: "topleft"
                 //map.pm.enableDraw('Marker', {
                 //    markerStyle: {
@@ -455,28 +459,28 @@ class MapHandeler {
         /*>---------- [ Zoom Initialization ] ----------<*/
         new L.Control.Zoom({
             position: "topright"
-        }).addTo(this.#atlas);
+        }).addTo(MapHandler.#atlas);
     }
-    loadLayer(inputSrc, options) {
+    static loadLayer(inputSrc, options) {
         const img = new Image();
         img.onload = () => {
             const bounds = [[0, 0], [-img.height, img.width].map((value) =>
                 value / Math.pow(2, options.maxNativeZoom))];
-            this.#atlas.setMaxBounds(bounds);
-            this.#atlas.fitBounds(bounds);
+            MapHandler.#atlas.setMaxBounds(bounds);
+            MapHandler.#atlas.fitBounds(bounds);
 
             new L.CanvasLayer({
                 ...options,
-                minZoom: this.#atlas.getBoundsZoom(bounds),
+                minZoom: MapHandler.#atlas.getBoundsZoom(bounds),
                 bounds,
                 img
-            }).addTo(this.#atlas);
+            }).addTo(MapHandler.#atlas);
         }
         img.onerror = (event) => { throw new Error(event.target.error) };
         img.src = inputSrc;
     }
 
-    async deleteMapLayer() {
+    static async deleteMapLayer() {
 
     }
 }
