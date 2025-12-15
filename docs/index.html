@@ -2,49 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Realms' Atlas - Interactive Map Editor</title>
 
     <!--Fonts-->
     <!--Style Lib-->
-    <link href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon/dist/iconify-icon.min.js"></script>
 
     <!--Lib-->
-    <script src="https://cdn.jsdelivr.net/npm/@iconify/iconify/dist/iconify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/peerjs/dist/peerjs.min.js"></script>-->
 
     <script src="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-search/dist/leaflet-search.src.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.js"></script>
 
-
     <!--Style-->
-    <link href="styles/indexUtils.css" type="text/css" rel="stylesheet">
-    <link href="styles/mapObj.css" type="text/css" rel="stylesheet">
+    <link href="styles/initUtils.css" type="text/css" rel="stylesheet">
+    <link href="styles/mapBx.css" type="text/css" rel="stylesheet">
 
     <!--Scripts-->
-    <script src="scripts/indexUtils.js" type="text/javascript" charset="utf-8"></script>
-    <script src="scripts/mapObj.js" type="text/javascript" charset="utf-8"></script>
-    <script src="scripts/sidebarEntry.js" type="text/javascript" charset="utf-8"></script>
+    <script src="scripts/initUtils.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
     <!--Popup Structure-->
-    <div id="bgPopup" hidden></div>
+    <div init-hdl id="bgPopup" hidden></div>
 
     <!--Banner-->
     <header>
         <h1>Realms' Atlas</h1>
-        <button id="headerShare">Spectator URL</button>
-        <button id="headerDownload"></button>
+        <!--<button id="dataShare">Spectator URL</button>-->
+        <button init-hdl id="dataLink"></button>
+        <button init-hdl id="dataShare" hidden></button>
+        <button init-hdl id="dataSave" hidden></button>
+        <button init-hdl id="dataClear"></button>
     </header>
 
     <!--Web Contents-->
     <main>
-        <div id="imgInput">
-            <h2>Insert an image or Data file</h2>
-            <input type="file" accept="image/*,.kprl" />
+        <div id="fileInput">
+            <h1>Insert an image or url</h1>
+            <input type="file" accept="image/*" />
+            <input type="text" placeholder="Or paste the url here" />
         </div>
     </main>
 </body>
