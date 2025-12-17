@@ -27,17 +27,12 @@
     <script src="scripts/initUtils.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
-    <!--Popup Structure-->
-    <div init-hdl id="bgPopup" hidden></div>
-
     <!--Banner-->
     <header>
         <h1>Realms' Atlas</h1>
-        <!--<button id="dataShare">Spectator URL</button>-->
-        <button init-hdl id="dataLink"></button>
-        <button init-hdl id="dataShare" hidden></button>
-        <button init-hdl id="dataSave" hidden></button>
-        <button init-hdl id="dataClear"></button>
+        <button init-hdl id="dataShare" class="iconBtn"></button>
+        <button init-hdl id="dataSave" class="iconBtn"></button>
+        <button init-hdl id="dataClear" class="iconBtn"></button>
     </header>
 
     <!--Web Contents-->
@@ -48,5 +43,7 @@
             <input type="text" placeholder="Or paste the url here" />
         </div>
     </main>
+
+    <!--Popup Structure-->
 </body>
 </html>
