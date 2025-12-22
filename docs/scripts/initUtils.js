@@ -2,17 +2,10 @@
 document.addEventListener("DOMContentLoaded", async () => {
     document.main = document.body.getElementsByTagName("main")[0];
     window.urlSearch = new URLSearchParams(window.location.hash.substring(1));
-    DataHandler.dataURL = window.urlSearch.get("dataURL");
+    document.isHost = Boolean(window.urlSearch.get("dataURL"));
 
-    /*>---------- [ Initialize Google Drive ] ----------<*/
-    const LinkPopup = () =>
-        new PopupHandler({
-            type: "driveLink",
-            classBtn: "iconBtn",
-            titleText: "Sign in to Google Drive to manage savestates",
-            func: [PopupHandler.setupDrivePopup]
-        });
-    LinkPopup();
+    /*>---------- [ Initialize Components ] ----------<*/
+    MapHandler.init();
 
     /*>---------- [ Initialize Client ] ----------<*/
     const elemList = Object.fromEntries(
@@ -20,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             .map(elem => [elem.id, elem])
     );
 
-    if (DataHandler.dataURL) {
+    if (document.isHost) {
         for (const elem of Object.values(elemList))
             elem.remove()
 
@@ -29,15 +22,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    /*>---------- [ Initialize Components ] ----------<*/
+    /*>---------- [ Initialize Header Buttons ] ----------<*/
     const {
         dataShare,
         dataSave,
-        dataClear
+        dataClear,
+        fileInput
     } = elemList;
-    //DataHandler.setDataBase(document.main);
-
-    /*>---------- [ Initialize Header Buttons ] ----------<*/
     dataShare.addEventListener("click", async () => { //TODO
 
     });
@@ -55,6 +46,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         LinkPopup();
     });
+
+    /*>---------- [ Initialize Main ] ----------<*/
+    //DataHandler.setDataBase(document.main);
+    
+    const [title, inputImg, inputURL] = [...fileInput.children];
+    inputImg.addEventListener("change", MapHandler.loadLayer);
+    inputURL.addEventListener("change", MapHandler.loadLayer);
+
+    /*>---------- [ Initialize Google Drive ] ----------<*/
+    //const LinkPopup = () =>
+    //    new PopupHandler({
+    //        type: "driveLink",
+    //        classBtn: "iconBtn",
+    //        titleText: "Sign in to Google Drive to manage savestates",
+    //        func: [PopupHandler.setupDrivePopup]
+    //    });
+    //LinkPopup();
 });
 
 class PopupHandler {
@@ -145,6 +153,8 @@ class PopupHandler {
         });
         fInput.addEventListener("dblclick", async (e) => {
             //TODO: Load & rasterize content;
+
+            DataHandller.getShareLink();
             popup.#bg.remove();
         });
         const savEntry = newDOM.firstElementChild;
@@ -236,9 +246,9 @@ class DataHandler {
         file: "",
     };
 
-    static dataURL = null;
     static #clientToken = null;
     static #accessToken = null;
+    static #dataURL = null;
 
     static async driveLink() {
         return new Promise((resolve, reject) => {
@@ -390,7 +400,7 @@ class DataHandler {
         if (!data.webViewLink)
             throw new Error("The file has not webViewLink");
 
-        return data.webViewLink;
+        return DataHandler.#dataURL = data.webViewLink;
     }
 
 

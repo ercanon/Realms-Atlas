@@ -278,13 +278,15 @@ main {
     display: grid;
     place-items: center;
     height: 100%;
-    padding: var(--spaceLyt);
+    margin: var(--tightSpaceLyt);
     background: var(--white);
     overflow: hidden;
+    font-family: Lora, "Calisto MT", "Bookman Old Style", Bookman, "Goudy Old Style", Garamond, "Hoefler Text", "Bitstream Charter", Georgia, serif;
     z-index: 0;
 }
 
 #fileInput {
+    position: absolute;
     display: flex;
     gap: var(--spaceLyt);
     flex-direction: column;
@@ -296,7 +298,7 @@ main {
     }
     #fileInput > input {
         font-size: 1.2rem;
-        padding: 1rem;
+        padding: var(--spaceLyt);
         line-height: 1rem;
     }
 

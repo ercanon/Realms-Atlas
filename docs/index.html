@@ -8,6 +8,9 @@
     <!--Fonts-->
     <!--Style Lib-->
     <script src="https://cdn.jsdelivr.net/npm/iconify-icon/dist/iconify-icon.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/leaflet/dist/leaflet.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.min.css" rel="stylesheet">
+
 
     <!--Lib-->
     <script src="https://cdn.jsdelivr.net/npm/fflate/umd/index.min.js"></script>
@@ -25,6 +28,8 @@
 
     <!--Scripts-->
     <script src="scripts/initUtils.js" type="text/javascript" charset="utf-8"></script>
+    <script src="scripts/mapBx.js" type="text/javascript" charset="utf-8"></script>
+    <script src="scripts/sidebarEntry.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
     <!--Banner-->
@@ -37,7 +42,7 @@
 
     <!--Web Contents-->
     <main>
-        <div id="fileInput">
+        <div init-hdl id="fileInput">
             <h1>Insert an image or url</h1>
             <input type="file" accept="image/*" />
             <input type="text" placeholder="Or paste the url here" />
