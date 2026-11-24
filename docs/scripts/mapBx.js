@@ -400,71 +400,52 @@ class MapHandler {
         }).setView([0, 0], 0);
 
         /*>---------- [ Sidebar Initialization ] ----------<*/
-        const sidebar = new L.Control.Sidebar({
-            position: "sideleft",
-            autopan: true
-        }).addTo(MapHandler.#atlas);
+        //const sidebar = new L.Control.Sidebar({
+        //    position: "sideleft",
+        //    autopan: true
+        //}).addTo(MapHandler.#atlas);
 
-        new L.Control.Sidebar.InfoEntry({
-            title: "Map Information",
-            iconBtn: false
-        }).addTo(sidebar);
+        //new L.Control.Sidebar.InfoEntry({
+        //    title: "Map Information",
+        //    iconBtn: false
+        //}).addTo(sidebar);
 
-        new L.Control.Sidebar.MarkerListEntry({
-            title: "Marker Index",
-            iconList:
-                fetch("https://cdn.jsdelivr.net/npm/@iconify-json/game-icons/icons.json").then((iconList) =>
-                    iconList.json()),
-            iconBtn: false
-        }).addTo(sidebar);
+        //new L.Control.Sidebar.MarkerListEntry({
+        //    title: "Marker Index",
+        //    iconList:
+        //        fetch("https://cdn.jsdelivr.net/npm/@iconify-json/game-icons/icons.json").then((iconList) =>
+        //            iconList.json()),
+        //    iconBtn: false
+        //}).addTo(sidebar);
 
         /*>---------- [ SearchBtn Initialization ] ----------<*/
-        L.control.search({
-            position: "sideleft_upper",
-            autoCollapse: true
-        }).addTo(MapHandler.#atlas);
+        //L.control.search({
+        //    position: "sideleft_upper",
+        //    autoCollapse: true
+        //}).addTo(MapHandler.#atlas);
 
         /*>---------- [ Host Extra Tools ] ----------<*/
-        if (document.isHost) {
-            /*const delMapPopup = new PopupHandler("delMapPopup", false);*/
-            new L.Control.MapBtn({
-                position: "bottomright",
-                className: "delMap",
-                innerMsg: "Delete Map",
-                //action: () =>
-                //    delMapPopup.reveal()
-            }).addTo(MapHandler.#atlas);
+        //if (document.isHost) {
+        //    /*const delMapPopup = new PopupHandler("delMapPopup", false);*/
+        //    new L.Control.MapBtn({
+        //        position: "bottomright",
+        //        className: "delMap",
+        //        innerMsg: "Delete Map",
+        //        //action: () =>
+        //        //    delMapPopup.reveal()
+        //    }).addTo(MapHandler.#atlas);
 
-            const geomanRef = MapHandler.#atlas.pm;
-            geomanRef.addControls({
-                position: "topleft"
-            });
-        }
+        //    const geomanRef = MapHandler.#atlas.pm;
+        //    geomanRef.addControls({
+        //        position: "topleft"
+        //    });
+        //}
 
         /*>---------- [ Zoom Initialization ] ----------<*/
         new L.Control.Zoom({
             position: "topright"
         }).addTo(MapHandler.#atlas);
     }
-
-    //static loadLayer(inputSrc, options) {
-    //    const img = new Image();
-    //    img.onload = () => {
-    //        const bounds = [[0, 0], [-img.height, img.width].map((value) =>
-    //            value / Math.pow(2, options.maxNativeZoom))];
-    //        MapHandler.#atlas.setMaxBounds(bounds);
-    //        MapHandler.#atlas.fitBounds(bounds);
-
-    //        new L.CanvasLayer({
-    //            ...options,
-    //            minZoom: MapHandler.#atlas.getBoundsZoom(bounds),
-    //            bounds,
-    //            img
-    //        }).addTo(MapHandler.#atlas);
-    //    }
-    //    img.onerror = (event) => { throw new Error(event.target.error) };
-    //    img.src = inputSrc;
-    //}
 
     static async loadLayer({ target }, options) {
         let imgURL = null;
@@ -475,12 +456,7 @@ class MapHandler {
                 return alert("No valid file selected.");
             }
 
-            imgURL = await new Promise((resolve, reject) => {
-                const reader = MapHandler.#fileReader;
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsDataURL(file);
-            });
+            imgURL = URL.createObjectURL(file);
         }
         else if (target.value) {
             imgURL = target.value.trim();
@@ -490,9 +466,9 @@ class MapHandler {
 
         const img = new Image();
         img.onload = () => {
-            const scale = 1 / (2 ** options?.maxNativeZoom || MapHandler.#atlas.options.maxNativeZoom);
-            const bounds = [[0, 0], [-img.height * scale, img.width * scale]];
             const atlas = MapHandler.#atlas;
+            const scale = 1 / (2 ** options?.maxNativeZoom || atlas.options.maxNativeZoom);
+            const bounds = [[0, 0], [-img.height * scale, img.width * scale]];
 
             atlas.setMaxBounds(bounds);
             atlas.fitBounds(bounds); 

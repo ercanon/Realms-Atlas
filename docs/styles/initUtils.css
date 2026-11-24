@@ -292,6 +292,7 @@ main {
     flex-direction: column;
     text-align-last: center;
     margin: var(--looseSpaceLyt);
+    z-index: 1;
 }
     #fileInput > h1 {
         margin-bottom: var(--looseSpaceLyt);
@@ -346,6 +347,10 @@ main {
 }
 
 .parsed-md hr {
+    width: 100%;
+    border: 0;
+    height: 2px;
+    background: var(--black);
     margin-block: .7rem;
 }
 
